@@ -1,3 +1,4 @@
+using BlazorApp1.Server.Controllers.Retiros;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -25,6 +26,7 @@ namespace BlazorApp1.Server
 
             services.AddControllersWithViews();
             services.AddRazorPages();
+            services.AddScoped<IRetirosRepo,RetirosRepo>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
