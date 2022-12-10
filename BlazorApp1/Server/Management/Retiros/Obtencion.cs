@@ -19,7 +19,7 @@ namespace BlazorApp1.Server.Management.Retiros
 
         private static async Task GetBodyRetirosAsync(string TipoEntrada, string Comuna, DateTime FechaDesde,
                                                        DateTime FechaHasta, string EstadoRetiro, int Movil,
-                                                       string CodCliente, string Zona, Usuario usuario)
+                                                       string CodCliente, string Zona, IUsuario usuario)
         {
             string url = $"recogidas_repartos/recogidas_consulta.do";
 
@@ -51,7 +51,7 @@ namespace BlazorApp1.Server.Management.Retiros
         }
 
         public static async Task<List<Retiro>> GetRetirosAsync(string TipoEntrada, string Comuna, DateTime FechaDesde,
-                                                       DateTime FechaHasta,Usuario usuario, string EstadoRetiro = "",
+                                                       DateTime FechaHasta,IUsuario usuario, string EstadoRetiro = "",
                                                        int Movil = 0, string CodCliente = "", string Zona = "")
         {
             _Body = String.Empty;
@@ -109,12 +109,13 @@ namespace BlazorApp1.Server.Management.Retiros
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                throw;
             }
             return retiros;
         }
 
         public static async IAsyncEnumerable<Retiro> GetRetirosAsyncYield(string TipoEntrada, string Comuna, DateTime FechaDesde,
-                                                       DateTime FechaHasta, Usuario usuario, string EstadoRetiro = "", int Movil = 0,
+                                                       DateTime FechaHasta, IUsuario usuario, string EstadoRetiro = "", int Movil = 0,
                                                        string CodCliente = "", string Zona = "")
         {
             _Body = String.Empty;
@@ -165,7 +166,7 @@ namespace BlazorApp1.Server.Management.Retiros
 
         }
 
-        public static async Task<Retiro> GetDetalleAsync(int CodigoRetiro, Usuario usuario)
+        public static async Task<Retiro> GetDetalleAsync(int CodigoRetiro, IUsuario usuario)
         {
             _Body = String.Empty;
             string url = $"recogidas_repartos/gen_recogidas_manual_form.do?codigo_rec={CodigoRetiro}&volver=&pendiente=&finalizada=null";
@@ -244,49 +245,56 @@ namespace BlazorApp1.Server.Management.Retiros
             return retiro;
         }
 
-        public static async Task<List<Retiro>> GetReporteSucursalesAsync(DateTime FechaSolicitud, Usuario usuario)
+        public static async Task<List<Retiro>> GetReporteSucursalesAsync(DateTime FechaSolicitud, IUsuario usuario)
         {
             Dictionary<string, string> Sucursales = Shared.Utilities.Sucursales.GetSucursales();
             List<Retiro> Retiros = new List<Retiro>();
-
-            foreach (KeyValuePair<string, string> sucursal in Sucursales)
+            try
             {
-                List<Retiro> retiroToAdd = await GetRetirosAsync("COURIER", "", FechaSolicitud, FechaSolicitud, usuario, "", CodCliente: sucursal.Value); //await StaticRetirosManagement.GetRetirosEnumerable("", "COURIER", "", fechaTrabajable, fechaTrabajable, "", sucursal.Value);
-                Tracking trackingActual = new Tracking();
-                Retiro retiroActual = new Retiro();
-                if (retiroToAdd == null)
-                    continue;
-                if (retiroToAdd.Count == 0)
-                    continue;
 
-                retiroActual = retiroToAdd.Where(r => r.PmHasta != DateTime.Parse("0:00") &&
-                                                      r.PmDesde != DateTime.Parse("0:00") &&
-                                                      r.TipoRetiro == "PM" &&
-                                                      !r.Contacto.Contains("RETIRO POSTAL") &&
-                                                      r.Movil != "864999").FirstOrDefault();
+                foreach (KeyValuePair<string, string> sucursal in Sucursales)
+                {
+                    List<Retiro> retiroToAdd = await GetRetirosAsync("COURIER", "", FechaSolicitud, FechaSolicitud, usuario, "", CodCliente: sucursal.Value); //await StaticRetirosManagement.GetRetirosEnumerable("", "COURIER", "", fechaTrabajable, fechaTrabajable, "", sucursal.Value);
+                    Tracking trackingActual = new Tracking();
+                    Retiro retiroActual = new Retiro();
+                    if (retiroToAdd == null)
+                        continue;
+                    if (retiroToAdd.Count == 0)
+                        continue;
 
-                if (retiroActual == null)
-                    continue;
+                    retiroActual = retiroToAdd.Where(r => r.PmHasta != DateTime.Parse("0:00") &&
+                                                          r.PmDesde != DateTime.Parse("0:00") &&
+                                                          r.TipoRetiro == "PM" &&
+                                                          !r.Contacto.Contains("RETIRO POSTAL") &&
+                                                          r.Movil != "864999").FirstOrDefault();
 
-                retiroActual.TrackingList = await Trackings.Obtencion.GetTracking(retiroActual, usuario);
-                //await retiroActual.GetTrackingList();
+                    if (retiroActual == null)
+                        continue;
 
-                if (retiroActual.TrackingList.Count == 0)
-                    continue;
-                else
-                    trackingActual = retiroActual.TrackingList.LastOrDefault(t => t.Tipo.Equals("DIAF") || t.Tipo.Equals("DIAR"));
+                    retiroActual.TrackingList = await Trackings.Obtencion.GetTracking(retiroActual, usuario);
+                    //await retiroActual.GetTrackingList();
 
-                if (trackingActual == null)
-                    continue;
+                    if (retiroActual.TrackingList.Count == 0)
+                        continue;
+                    else
+                        trackingActual = retiroActual.TrackingList.LastOrDefault(t => t.Tipo.Equals("DIAF") || t.Tipo.Equals("DIAR"));
 
-                retiroActual.TrackingList.Clear();
-                retiroActual.TrackingList.Add(trackingActual);
+                    if (trackingActual == null)
+                        continue;
 
-                Retiros.Add(retiroActual);
+                    retiroActual.TrackingList.Clear();
+                    retiroActual.TrackingList.Add(trackingActual);
+
+                    Retiros.Add(retiroActual);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
             }
             return Retiros;
         }
-        public static async IAsyncEnumerable<Retiro> GetReporteSucursalesAsyncYield(DateTime FechaSolicitud, Usuario usuario )
+        public static async IAsyncEnumerable<Retiro> GetReporteSucursalesAsyncYield(DateTime FechaSolicitud, IUsuario usuario )
         {
             Dictionary<string, string> Sucursales = Shared.Utilities.Sucursales.GetSucursales();
             foreach (KeyValuePair<string, string> sucursal in Sucursales)
@@ -326,7 +334,7 @@ namespace BlazorApp1.Server.Management.Retiros
                 yield return retiroActual;
             }
         }
-        public static async Task<List<MovilDetalle>> GetDetalleFromMCAsync(DateTime Fecha, Usuario usuario)
+        public static async Task<List<MovilDetalle>> GetDetalleFromMCAsync(DateTime Fecha, IUsuario usuario)
         {
             List<MovilDetalle> ret = new List<MovilDetalle>();
             string url = $"http://wsadmpdas.icorreos.cl/api/v1/tpt/vistageneral/cuadraturaretiros/864/{Fecha.ToString("yyyy-MM-dd")}";
@@ -350,7 +358,7 @@ namespace BlazorApp1.Server.Management.Retiros
             return ret;
         }
         
-        public static async Task<List<Retiro>> GetTotalFromMCAsync(MovilDetalle movilDetalle, EstadoDetalleMc Estado, DateTime Fecha, Usuario usuario)
+        public static async Task<List<Retiro>> GetTotalFromMCAsync(MovilDetalle movilDetalle, EstadoDetalleMc Estado, DateTime Fecha, IUsuario usuario)
         {
             List<Retiro> ret = new List<Retiro>();
             // ttp://wsadmpdas.icorreos.cl/api/v1/tpt/vistageneral/cuadraturaretiros/detalle/TOTAL/864255/2022-09-11

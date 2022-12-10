@@ -1,0 +1,89 @@
+﻿@using BlazorApp1.Shared.Modelo.Retiros
+@inject IRetirosRepoService retirosRepo
+
+<RadzenCard>
+
+</RadzenCard>
+<RadzenCard>
+
+
+    <RadzenDataGrid AllowFiltering="true"
+                    Data="@retiros"
+                    TItem="Retiro"
+                    PageSize="100"
+                    AllowPaging="true"
+                    PagerHorizontalAlign="HorizontalAlign.Left"
+                    AllowColumnResize="true"
+                    FilterMode="FilterMode.Simple"
+                    AllowSorting="true"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    ShowPagingSummary="true">
+
+        <Columns>
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Asignar"
+                                  Title="Asignar"
+                                  Filterable="false">
+                <Template Context="data">
+                    <RadzenCheckBox @bind-Value="data.Asignar" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Movil"
+                                  Title="Movil" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="CodigoRetiro"
+                                  Title="N° Retiro" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Nombre"
+                                  Title="Nombre Retiro" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Direccion"
+                                  Title="Direccion" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Comuna"
+                                  Title="Comuna" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="AmDesde"
+                                  Title="AmDesde">
+                <Template Context="data">
+                    @data.AmDesde.ToShortTimeString()
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="AmHasta"
+                                  title="AmHasta">
+                <Template Context="data">
+                    @data.AmHasta.ToShortTimeString()
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="PmDesde"
+                                  Title="PmDesde">
+                <Template Context="data">
+                    @data.PmDesde.ToShortTimeString()
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="PmHasta"
+                                  Title="PmHasta">
+                <Template Context="data">
+                    @data.PmHasta.ToShortTimeString()
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+
+    </RadzenDataGrid>
+
+</RadzenCard>
+
+@code {
+    IEnumerable<Retiro> retiros;
+
+    protected override async Task OnInitializedAsync()
+    {
+        //retiros = await retirosRepo.GetRetirosPendientes();
+    }
+
+
+}

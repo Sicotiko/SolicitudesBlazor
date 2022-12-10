@@ -1,0 +1,155 @@
+﻿@using BlazorApp1.Client.Services.OT
+@inject IOrdenTrabajoRepoService OTRepo
+@inject NotificationService Notification
+
+<RadzenCard>
+    <div class="input-group">
+        <span class="input-group-text">Fecha Desde</span>
+        <RadzenDatePicker DateFormat="d" @bind-Value="FechaDesde" />
+    </div>
+    <div class="input-group">
+        <span class="input-group-text">Fecha Hasta</span>
+        <RadzenDatePicker DateFormat="d" @bind-Value="FechaHasta" />
+    </div>
+    <RadzenButton Text="Actualizar" Click="Update" />
+</RadzenCard>
+
+<RadzenCard>
+    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Class="mt-2 mb-4" Text="Nueva OT" Click="@InsertRow" Disabled=@(ordenToInsert != null) />
+    <RadzenDataGrid @ref="OrdenesGrid"
+                    TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
+                    Data="OTRepo.Ordenes"
+                    AllowPaging="true"
+                    PageSize="50"
+                    AllowSorting="true"
+                    AllowAlternatingRows="true"
+                    AllowFiltering="true"
+                    RowCreate="@OnCreateRow">
+        <Columns>
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
+                                  Property="Numero"
+                                  Title="N° OT"
+                                  Width="100px" />
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
+                                  Property="Movil"
+                                  Title="Movil"
+                                  Width="100px">
+                <EditTemplate Context="orden">
+                    <RadzenTextBox @bind-Value="@orden.Movil" MaxLength="6" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
+                                  Property="Estado"
+                                  Title="Estado"
+                                  Width="100px" />
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
+                                  Property="Fecha"
+                                  Title="Fecha"
+                                  Width="100px" />
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
+                                  Property="Comuna"
+                                  Title="Comuna"
+                                  Width="100px">
+                <EditTemplate Context="orden">
+                    <RadzenTextBox @bind-Value="@orden.Comuna" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
+                                  Context="orden"
+                                  Title="Controles"
+                                  Filterable="false"
+                                  Sortable="false"
+                                  Width="100px">
+                <Template Context="orden">
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                  Icon="delete"
+                                  Variant="Variant.Flat"
+                                  Size="ButtonSize.Medium"
+                                  Click="(args => DeleteRow(orden))"
+                                  @onclick:stopPropagation="true" />
+                </Template>
+                <EditTemplate Context="orden">
+                    <RadzenButton Icon="check"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Variant="Variant.Flat"
+                                  Size="ButtonSize.Medium"
+                                  Click="@((args) => SaveRow(orden))" />
+                    <RadzenButton Icon="close"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Variant="Variant.Flat"
+                                  Size="ButtonSize.Medium"
+                                  Click="@((args) => CancelEdit(orden))" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+        </Columns>
+
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    RadzenDataGrid<BlazorApp1.Shared.Modelo.OT.OrdenTrabajo> OrdenesGrid;
+    BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenToInsert;
+    DateTime FechaDesde = DateTime.Today;
+    DateTime FechaHasta = DateTime.Today;
+
+    private async Task Update()
+    {
+        await OTRepo.UpdateOrdenes(0, "NO_CERRADAS", FechaDesde, FechaHasta);
+    }
+
+    private async Task InsertRow()
+    {
+        ordenToInsert = new BlazorApp1.Shared.Modelo.OT.OrdenTrabajo();
+        await OrdenesGrid.InsertRow(ordenToInsert);
+    }
+
+
+    private void OnCreateRow(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
+    {
+        if (ordenTrabajo.Movil != null)
+            OTRepo.CreateOrden(int.Parse(ordenTrabajo.Movil));
+    }
+
+    private void CancelEdit(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
+    {
+        if (ordenTrabajo == ordenToInsert)
+        {
+            ordenToInsert = null;
+        }
+
+        OrdenesGrid.CancelEditRow(ordenTrabajo);
+    }
+    private async Task DeleteRow(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
+    {
+        if (ordenTrabajo == ordenToInsert)
+        {
+            ordenToInsert = null;
+        }
+        if (await OTRepo.CloseOrden(ordenTrabajo))
+        {
+            //OrdenesGrid.CancelEditRow(ordenTrabajo);
+            await OrdenesGrid.Reload();
+        }
+        else
+            //Agregar Notificacion si no cierra
+            Notification.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Duration = 4000,
+                    Summary = "No Cerrada",
+                    Detail = "La OT no se cerró."
+                });
+
+        await OrdenesGrid.Reload();
+
+
+    }
+    private async Task SaveRow(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
+    {
+        await OrdenesGrid.UpdateRow(ordenTrabajo);
+        ordenToInsert = null;
+    }
+
+
+}

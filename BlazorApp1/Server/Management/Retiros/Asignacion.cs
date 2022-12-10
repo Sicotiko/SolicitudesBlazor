@@ -9,7 +9,7 @@ namespace BlazorApp1.Server.Management.Retiros
 {
     public class Asignacion
     {
-        public static async Task PreAsignar(Retiro retiro, Usuario usuario)
+        public static async Task PreAsignar(Retiro retiro, IUsuario usuario)
         {
             string Url = "recogidas_repartos/asignacion_recogidas.do";
 
@@ -27,7 +27,7 @@ namespace BlazorApp1.Server.Management.Retiros
             await Shared.ClienteWeb.Consultas.ConsultaPost.PostAsync(Url, Parametros, usuario);
         }
 
-        public static async Task PreAsignar(Retiro retiro, int Movil, Usuario usuario)
+        public static async Task PreAsignar(Retiro retiro, int Movil, IUsuario usuario)
         {
             string Url = "recogidas_repartos/asignacion_recogidas.do";
 
@@ -44,7 +44,7 @@ namespace BlazorApp1.Server.Management.Retiros
 
             await Shared.ClienteWeb.Consultas.ConsultaPost.PostAsync(Url, Parametros, usuario);
         }
-        public static async Task Asignar(Retiro retiro, Usuario usuario)
+        public static async Task Asignar(Retiro retiro, IUsuario usuario)
         {
             int movil = int.Parse(retiro.Movil);
             string Url = "recogidas_repartos/asignacion_recogidas.do";
@@ -63,7 +63,7 @@ namespace BlazorApp1.Server.Management.Retiros
             await Shared.ClienteWeb.Consultas.ConsultaPost.PostAsync(Url, Parameters, usuario);
 
         }
-        public static async Task Asignar(Retiro retiro, int Movil,string NumeroOrdenTrabajo, Usuario usuario)
+        public static async Task Asignar(Retiro retiro, int Movil,string NumeroOrdenTrabajo, IUsuario usuario)
         {
             string Url = "recogidas_repartos/asignacion_recogidas.do";
             Dictionary<string, string> Parameters = new Dictionary<string, string>();
@@ -81,7 +81,7 @@ namespace BlazorApp1.Server.Management.Retiros
             await Shared.ClienteWeb.Consultas.ConsultaPost.PostAsync(Url, Parameters, usuario); 
 
         }
-        public static async Task Asignar(List<Retiro> Retiros, int Movil, string NumeroOrdenTrabajo, Usuario usuario)
+        public static async Task Asignar(List<Retiro> Retiros, int Movil, string NumeroOrdenTrabajo, IUsuario usuario)
         {
             string Url = "recogidas_repartos/asignacion_recogidas.do";
             Dictionary<string, string> Parameters = new Dictionary<string, string>();

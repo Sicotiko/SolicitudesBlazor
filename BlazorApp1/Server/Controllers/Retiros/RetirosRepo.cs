@@ -8,24 +8,27 @@ namespace BlazorApp1.Server.Controllers.Retiros
 {
     public class RetirosRepo : IRetirosRepo
     {
-        public async Task AsignarRetiroAsync(Retiro retiro, Usuario usuario)
+        public async Task AsignarRetiroAsync(Retiro retiro, IUsuario usuario)
         {
             await Management.Retiros.Asignacion.Asignar(retiro, usuario);
         }
 
-        public async Task<Retiro> GetDetalleAsync(int CodigoRetiro, Usuario usuario)
+        public async Task<Retiro> GetDetalleAsync(int CodigoRetiro, IUsuario usuario)
         {
             return await Management.Retiros.Obtencion.GetDetalleAsync(CodigoRetiro, usuario);
         }
 
-        public async Task<IEnumerable<Retiro>> GetReporteSucursalesAsync(DateTime FechaSolicitud, Usuario usuario)
+        public async Task<IEnumerable<Retiro>> GetReporteSucursalesAsync(DateTime FechaSolicitud, IUsuario usuario)
         {
-            return await Management.Retiros.Obtencion.GetReporteSucursalesAsync(FechaSolicitud,usuario);
+            return await Management.Retiros.Obtencion.GetReporteSucursalesAsync(FechaSolicitud, usuario);
         }
 
-        public async Task<IEnumerable<Retiro>> GetRetirosAsync(string TipoEntrada, string Comuna, DateTime FechaDesde, DateTime FechaHasta, Usuario usuario, string EstadoRetiro = "")
+        public async Task<IEnumerable<Retiro>> GetRetirosAsync(string TipoEntrada, string Comuna, DateTime FechaDesde, DateTime FechaHasta, IUsuario usuario, string EstadoRetiro = "", string Movil = "")
         {
-            return await Management.Retiros.Obtencion.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario,EstadoRetiro);
+            int mobileNumber = 0;
+            if (Movil != "")
+                mobileNumber = int.Parse(Movil);
+            return await Management.Retiros.Obtencion.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario, EstadoRetiro, Movil: mobileNumber);
         }
     }
 }

@@ -10,13 +10,13 @@ namespace BlazorApp1.Shared.ClienteWeb.Consultas
 {
     public static class ConsultaPost
     {
-        public static string Post(string URL, Dictionary<string, string> Parametros, Usuario usuario)
+        public static string Post(string URL, Dictionary<string, string> Parametros, IUsuario IUsuario)
         {
             string Body = string.Empty;
             try
             {
                 HttpContent formUrlEncodedContent = new FormUrlEncodedContent(Parametros);
-                Body = ClientInstance.GetClient(usuario).PostAsync(URL, formUrlEncodedContent).Result.Content.ReadAsStringAsync().Result;
+                Body = ClientInstance.GetClient(IUsuario).PostAsync(URL, formUrlEncodedContent).Result.Content.ReadAsStringAsync().Result;
             }
             catch (Exception)
             {
@@ -29,13 +29,13 @@ namespace BlazorApp1.Shared.ClienteWeb.Consultas
             return Body;
         }
 
-        public static async Task<string> PostAsync(string URL, Dictionary<string, string> Parametros, Usuario usuario)
+        public static async Task<string> PostAsync(string URL, Dictionary<string, string> Parametros, IUsuario IUsuario)
         {
             string Body = string.Empty;
             try
             {
                 HttpContent formUrlEncodedContent = new FormUrlEncodedContent(Parametros);
-                Body = await ClientInstance.GetClient(usuario).PostAsync(URL, formUrlEncodedContent).Result.Content.ReadAsStringAsync();
+                Body = await ClientInstance.GetClient(IUsuario).PostAsync(URL, formUrlEncodedContent).Result.Content.ReadAsStringAsync();
             }
             catch (Exception)
             {

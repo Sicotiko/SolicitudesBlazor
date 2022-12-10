@@ -13,7 +13,7 @@ namespace BlazorApp1.Shared.ControllerModel
         public Retiro _retiro { get; private set; }
         public Usuario _usuario { get; private set; }
 
-        RetiroToAssign(Retiro retiro,Usuario usuario)
+        public RetiroToAssign(Retiro retiro,Usuario usuario)
         {
             _retiro = retiro;
             _usuario = usuario;

@@ -11,7 +11,7 @@ namespace BlazorApp1.Server.Management.OT
 {
     public class Finalizacion
     {
-        public static async Task<bool> CerrarOrden(OrdenTrabajo ordenTrabajo, Usuario usuario)
+        public static async Task<bool> CerrarOrden(OrdenTrabajo ordenTrabajo, IUsuario usuario)
         {
             string url = $"recogidas_repartos/control_dato.do?C=jsrs1&F=cerrar&P0=[{ordenTrabajo.Numero}]&P1=[0]&P2=[]&P3=[]&P4=[]&P5=[]&P6=[]&P7=[N]&P8=[]&P9=[]&P10=[]&P11=[]&P12=[]&P13=[]&P14=[]&U=1651521585558";
             string body;

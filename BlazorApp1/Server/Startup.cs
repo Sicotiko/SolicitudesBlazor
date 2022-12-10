@@ -1,3 +1,4 @@
+using BlazorApp1.Server.Controllers.OT;
 using BlazorApp1.Server.Controllers.Retiros;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,7 +27,8 @@ namespace BlazorApp1.Server
 
             services.AddControllersWithViews();
             services.AddRazorPages();
-            services.AddScoped<IRetirosRepo,RetirosRepo>();
+            services.AddScoped<IRetirosRepo, RetirosRepo>();
+            services.AddScoped<IOrdenTrabajoRepo, OrdenTrabajoRepo>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

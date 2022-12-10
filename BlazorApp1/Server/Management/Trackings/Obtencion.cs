@@ -11,7 +11,7 @@ namespace BlazorApp1.Server.Management.Trackings
 {
     public class Obtencion
     {
-        public static async Task<List<Tracking>> GetTracking(Retiro Retiro, Usuario usuario)
+        public static async Task<List<Tracking>> GetTracking(Retiro Retiro, IUsuario usuario)
         {
             try
             {

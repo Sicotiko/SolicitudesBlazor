@@ -9,9 +9,10 @@ namespace BlazorApp1.Server.Controllers.Retiros
     public interface IRetirosRepo
     {
         Task<IEnumerable<Retiro>> GetRetirosAsync(string TipoEntrada, string Comuna, DateTime FechaDesde,
-                                                       DateTime FechaHasta, Usuario usuario, string EstadoRetiro = "");
-        Task<Retiro> GetDetalleAsync(int CodigoRetiro, Usuario usuario);
-        Task<IEnumerable<Retiro>> GetReporteSucursalesAsync(DateTime FechaSolicitud, Usuario usuario);
-        Task AsignarRetiroAsync(Retiro retiro, Usuario usuario);
+                                                       DateTime FechaHasta, IUsuario usuario, string EstadoRetiro = "",
+                                                       string Movil = "");
+        Task<Retiro> GetDetalleAsync(int CodigoRetiro, IUsuario usuario);
+        Task<IEnumerable<Retiro>> GetReporteSucursalesAsync(DateTime FechaSolicitud, IUsuario usuario);
+        Task AsignarRetiroAsync(Retiro retiro, IUsuario usuario);
     }
 }

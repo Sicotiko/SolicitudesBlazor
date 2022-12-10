@@ -1,0 +1,177 @@
+﻿@using BlazorApp1.Shared.Modelo.Comunas
+@using BlazorApp1.Shared.Utilities
+@inject IRetirosRepoService RetirosRepo
+@inject IOrdenTrabajoRepoService OrdenesRepo
+@inject NotificationService Note
+
+<RadzenCard>
+    <RadzenText Text="Fecha Origen" />
+    <RadzenDatePicker @bind-Value="FechaOrigen"
+                      DateFormat="d" />
+
+    <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                  Text="Preparar Todo"
+                  Click="Preparacion" />
+    <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                  Text="Asignar Seleccionados"
+                  Click="Asignacion"
+                  Disabled="GridLoading" />
+</RadzenCard>
+@*<RadzenCard>*@
+<RadzenText Text="Retiros A Asignar" />
+<RadzenDataGrid TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                Data="RetirosActual"
+                @ref="gridActual"
+                AllowPaging="true"
+                PageSize="50"
+                AllowAlternatingRows="true"
+                AllowSorting="true"
+                AllowFiltering="true"
+                FilterMode="FilterMode.Simple"
+                IsLoading="GridLoading"
+                AllowColumnResize="true">
+
+    <Columns>
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Asignar"
+                              Title="Asignar?"
+                              Filterable="false"
+                              Sortable="false"
+                              Width="20">
+            <Template Context="retiro">
+                <RadzenCheckBox @bind-Value="retiro.Asignar" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="CodigoRetiro"
+                              Title="N° Retiro"
+                              Width="50" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Nombre"
+                              Title="Nombre"
+                              Width="200" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="CodigoCliente"
+                              Title="N° Cliente"
+                              Width="100" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Direccion"
+                              Title="Direccion"
+                              Width="250" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Comuna"
+                              Title="Comuna"
+                              Width="100" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Movil"
+                              Title="Movil"
+                              Width="30">
+            <Template Context="retiro">
+                <RadzenTextBox @bind-Value="retiro.Movil"
+                               MaxLength="6" />
+            </Template>
+        </RadzenDataGridColumn>
+
+    </Columns>
+</RadzenDataGrid>
+@*</RadzenCard>*@
+
+@code {
+    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosOrigen;
+    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosActual;
+    SectorName sectorName;
+    DateTime FechaOrigen = DateTime.Now;
+    DateTime FechaActual = DateTime.Now;
+    //RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridOrigen;
+    RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridActual;
+    bool GridLoading = false;
+
+    private async Task PoblarRetirosOrigen()
+    {
+
+        RetirosOrigen = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
+        var comunas = Comunas.GetComunasPorSector(sectorName);
+        for (int i = 0; i < 2; i++)
+        {
+            string TipoRetiro = i == 0 ? "COURIER" : "VALIJA";
+            foreach (var comuna in comunas)
+            {
+                IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosTodosLosEstados(TipoRetiro, comuna.Value, FechaOrigen, FechaOrigen);
+                RetirosOrigen.AddRange(retiros);
+            }
+            //Ordenar por algun campo el listado
+        }
+        //await gridOrigen.Reload();
+
+    }
+    private async Task PoblarRetirosActuales()
+    {
+        RetirosActual = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
+        var comunas = Comunas.GetComunasPorSector(sectorName);
+        for (int i = 0; i < 2; i++)
+        {
+            string TipoRetiro = i == 0 ? "COURIER" : "VALIJA";
+            foreach (var comuna in comunas)
+            {
+                IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosPendientes(TipoRetiro, comuna.Value, FechaActual, FechaActual);
+                RetirosActual.AddRange(retiros);
+            }
+            //Ordenar por algun campo el listado
+        }
+        await gridActual.Reload();
+    }
+
+    private async Task MezclaRetiros()
+    {
+        if (RetirosActual == null)
+            throw new NullReferenceException($"{nameof(RetirosActual)} El listado no puede ser nulo.");
+        if (RetirosOrigen == null)
+            throw new NullReferenceException($"{nameof(RetirosOrigen)} El listado no puede ser nulo.");
+
+        foreach (var retiro in RetirosActual)
+        {
+            var retiroToMix = RetirosOrigen.FirstOrDefault(r => r.Nombre == retiro.Nombre &&
+                                                                r.Direccion == retiro.Direccion &&
+                                                                r.Contacto == retiro.Contacto &&
+                                                                r.AmDesde == retiro.AmDesde &&
+                                                                r.AmHasta == retiro.AmHasta &&
+                                                                r.PmDesde == retiro.PmDesde &&
+                                                                r.PmHasta == retiro.PmHasta);
+
+            if (retiroToMix == null)
+                continue;
+            else
+            {
+                retiro.Movil = retiroToMix.Movil;
+            }
+
+        }
+        //await gridOrigen.Reload();
+        await gridActual.Reload();
+    }
+
+    private async Task Preparacion()
+    {
+        GridLoading = true;
+        await PoblarRetirosOrigen();
+        await PoblarRetirosActuales();
+        await MezclaRetiros();
+        GridLoading = false;
+    }
+    private async Task Asignacion()
+    {
+        if (RetirosActual == null || RetirosOrigen == null)
+            Note.Notify(new NotificationMessage()
+                {
+                    Summary = "Datos Faltantes",
+                    Detail = "Primero prepara Todo",
+                    Severity = NotificationSeverity.Warning,
+                    Duration = 5000
+                });
+        else
+            foreach (var retiro in RetirosActual.Where(r => r.Asignar == true))
+            {
+                await RetirosRepo.AsignarAsync(retiro);
+            }
+    }
+}

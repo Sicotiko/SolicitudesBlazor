@@ -1,0 +1,59 @@
+﻿@using BlazorApp1.Shared.Modelo.Retiros
+@inject IRetirosRepoService retiroRepo
+
+<RadzenCard>
+    <RadzenText Text="Fecha de Reporte" />
+    <RadzenDatePicker @bind-Value="DateValue"
+                      DateFormat="d" />
+    <RadzenButton Text="Reportar"
+                  ButtonStyle="ButtonStyle.Primary"
+                  Click="ReportarClicked" />
+</RadzenCard>
+<RadzenDataGrid TItem="Retiro"
+                Data="@retiros"
+                AllowSorting="true">
+    <Columns>
+        <RadzenDataGridColumn TItem="Retiro"
+                              Property="Nombre"
+                              Title="Nombre" />
+        <RadzenDataGridColumn TItem="Retiro"
+                              Title="Hora Rebaja">
+            <Template Context="data">
+                @data.TrackingList.First().FechaEstado.ToShortTimeString()
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Retiro"
+                              Property="Movil"
+                              Title="Movil" />
+        <RadzenDataGridColumn TItem="Retiro"
+                              Title="Efectuado">
+            <Template Context="data">
+                @{
+                    if (data.TrackingList.First().Tipo.Equals("DIAR"))
+                        {<RadzenText Text="Efectuado" />}
+                    else
+                        {<RadzenText Text="No Efectuado" />}
+}
+            </Template>
+        </RadzenDataGridColumn>
+
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    DateTime? DateValue = DateTime.Now;
+    IEnumerable<Retiro> retiros;
+
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    retiros = await retiroRepo.GetReporteSucursalesAsync((DateTime)DateValue);
+
+    //}
+    //no aparece la grilla, puede ser por el objeto retiros sin inicializar
+
+    private async Task ReportarClicked()
+    {
+        if (DateValue != null)
+            retiros = await retiroRepo.GetReporteSucursalesAsync((DateTime)DateValue);
+    }
+}

@@ -13,7 +13,7 @@ namespace BlazorApp1.Server.Management.OT
     {
         private static string _Body = string.Empty;
 
-        private static async Task GetBodyOtAsync(int PaginaActual, int Movil, string Estado, DateTime FechaDesde, DateTime FechaHasta, Usuario usuario, string NumeroOt = "")
+        private static async Task GetBodyOtAsync(int PaginaActual, int Movil, string Estado, DateTime FechaDesde, DateTime FechaHasta, IUsuario usuario, string NumeroOt = "")
         {
             string url = $"recogidas_repartos/ordenes_trabajo_consulta.do?buscar=true";
 
@@ -36,7 +36,7 @@ namespace BlazorApp1.Server.Management.OT
             _Body = await Shared.ClienteWeb.Consultas.ConsultaPost.PostAsync(url, Parameters, usuario);
         }
 
-        public static async Task<List<OrdenTrabajo>> GetOrdenesAsync(int Movil, string Estado, DateTime FechaDesde, DateTime FechaHasta, Usuario usuario, string NumeroOt = "")
+        public static async Task<List<OrdenTrabajo>> GetOrdenesAsync(int Movil, string Estado, DateTime FechaDesde, DateTime FechaHasta, IUsuario usuario, string NumeroOt = "")
         {
             _Body = string.Empty;
             List<OrdenTrabajo> ordenTrabajos = new List<OrdenTrabajo>();
@@ -56,6 +56,7 @@ namespace BlazorApp1.Server.Management.OT
                 do
                 {
                     await GetBodyOtAsync(PaginaActual, Movil, Estado, FechaDesde, FechaHasta, usuario, NumeroOt);
+
 
                     doc.LoadHtml(_Body);
                     BodyNode = Nodos.GetNode(doc.DocumentNode, "body");
@@ -86,8 +87,11 @@ namespace BlazorApp1.Server.Management.OT
                     {
                         DetalleListaOtNode = Nodos.GetNodes(fila, "td");
                         ordenToAdd = new OrdenTrabajo();
-                        //ordenToAdd.Numero = DetalleListaOtNode[0].InnerHtml;
-                        ordenToAdd.Numero = Nodos.GetNode(DetalleListaOtNode[0], "a").InnerHtml;
+                        var nodoNumero = Nodos.GetNode(DetalleListaOtNode[0], "a");
+                        if (nodoNumero == null)
+                            ordenToAdd.Numero = DetalleListaOtNode[0].InnerHtml;
+                        else
+                            ordenToAdd.Numero = nodoNumero.InnerHtml;
                         ordenToAdd.Movil = DetalleListaOtNode[1].InnerHtml;
                         ordenToAdd.Estado = DetalleListaOtNode[4].InnerHtml;
                         ordenToAdd.Fecha = DateTime.Parse(DetalleListaOtNode[5].InnerHtml);
@@ -97,7 +101,7 @@ namespace BlazorApp1.Server.Management.OT
                         int Recogidas = 0;
                         int.TryParse(DetalleListaOtNode[7].InnerHtml, out Recogidas);
                         ordenToAdd.Recogidas = Recogidas;
-                        
+
                         ordenTrabajos.Add(ordenToAdd);
                     }
 
@@ -106,14 +110,14 @@ namespace BlazorApp1.Server.Management.OT
             }
             catch (Exception ex)
             {
-                if(DetalleListaOtNode is not null)
-                Console.WriteLine(Nodos.GetNode(DetalleListaOtNode[0], "a").InnerHtml);
-                
+                if (DetalleListaOtNode is not null)
+                    Console.WriteLine(Nodos.GetNode(DetalleListaOtNode[0], "a").InnerHtml);
+
             }
             return ordenTrabajos;
         }
 
-        public static async IAsyncEnumerable<OrdenTrabajo> GetOrdenesAsyncYield(int Movil, string Estado, DateTime FechaDesde, DateTime FechaHasta,Usuario usuario, string NumeroOt = "")
+        public static async IAsyncEnumerable<OrdenTrabajo> GetOrdenesAsyncYield(int Movil, string Estado, DateTime FechaDesde, DateTime FechaHasta, IUsuario usuario, string NumeroOt = "")
         {
             _Body = string.Empty;
             OrdenTrabajo ordenToAdd;
@@ -140,7 +144,7 @@ namespace BlazorApp1.Server.Management.OT
                     string msgEncontrados = TdTituloTotal.InnerHtml;
                     msgEncontrados = msgEncontrados.Replace("&nbsp;registros encontrados&nbsp;&nbsp;", "");
                     msgEncontrados = msgEncontrados.Replace("\r\n\t", "");
-                    msgEncontrados = msgEncontrados.Replace(" ", ""); 
+                    msgEncontrados = msgEncontrados.Replace(" ", "");
                     int Founded;
                     int.TryParse(msgEncontrados, out Founded);
 

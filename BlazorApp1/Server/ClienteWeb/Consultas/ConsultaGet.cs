@@ -8,7 +8,7 @@ namespace BlazorApp1.Server.ClienteWeb.Consultas
 {
     public class ConsultaGet
     {
-        public static string Get(string URL, Usuario usuario)
+        public static string Get(string URL, IUsuario usuario)
         {
             string Body = string.Empty;
 
@@ -27,7 +27,7 @@ namespace BlazorApp1.Server.ClienteWeb.Consultas
             return Body;
         }
 
-        public static async Task<string> GetAsync(string URL,Usuario usuario)
+        public static async Task<string> GetAsync(string URL,IUsuario usuario)
         {
             string Body = string.Empty;
 
@@ -45,7 +45,7 @@ namespace BlazorApp1.Server.ClienteWeb.Consultas
 
             return Body;
         }
-        public static async Task<string> GetFromMcAsync(string URL, Usuario usuario)
+        public static async Task<string> GetFromMcAsync(string URL, IUsuario usuario)
         {
             string Body = string.Empty;
 

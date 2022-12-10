@@ -14,13 +14,14 @@ namespace BlazorApp1.Server.ClienteWeb
         private static Dictionary<string,HttpClient> Clients = new Dictionary<string, HttpClient>();
         private static Dictionary<string,HttpClient> ClientsForMC = new Dictionary<string, HttpClient>();
 
-        public static HttpClient GetClient(Usuario usuario)
+        public static HttpClient GetClient(IUsuario usuario)
         {
             //HttpClient cliente = new HttpClient();
             if(Clients.TryGetValue(usuario.GetCredentials(), out var cliente))
                 return cliente;
 
-            var byteArray = Encoding.ASCII.GetBytes($"{usuario.GetCredentials()}");
+            var byteArray = Encoding.ASCII.GetBytes(usuario.GetCredentials());
+            
             var header = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
             HttpClient localClient = new HttpClient();
             localClient.DefaultRequestHeaders.Authorization = header;
@@ -30,7 +31,7 @@ namespace BlazorApp1.Server.ClienteWeb
             return localClient;
         }
         
-        public static HttpClient GetClientForMC(Usuario usuario)
+        public static HttpClient GetClientForMC(IUsuario usuario)
         {
             if (Clients.TryGetValue(usuario.GetCredentials(), out var cliente))
                 return cliente;

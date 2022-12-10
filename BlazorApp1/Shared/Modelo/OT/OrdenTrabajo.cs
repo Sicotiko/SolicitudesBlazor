@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BlazorApp1.Shared.Modelo.Comunas;
 
 namespace BlazorApp1.Shared.Modelo.OT
 {
@@ -19,7 +20,8 @@ namespace BlazorApp1.Shared.Modelo.OT
         public int Recogidas { get; set; }
         public string Tipo { get; set; }
         public string SubTipo { get; set; }
-
+        public string Comuna { get; set; }
+        public SectorName SectorName { get; set; }
         //public async Task<bool> Cerrar()
         //{
         //    //return true;

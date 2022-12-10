@@ -11,7 +11,7 @@ namespace BlazorApp1.Server.Management.OT
 {
     public class Creacion
     {
-        public static async Task<OrdenTrabajo> CreateOrdenTrabajo(int Movil, Usuario usuario, bool Definitiva = true)
+        public static async Task<OrdenTrabajo> CreateOrdenTrabajo(int Movil, IUsuario usuario, bool Definitiva = true)
         {
             string url = $"recogidas_repartos/asignacion_aceptar.do";
             string Body;
@@ -52,7 +52,7 @@ namespace BlazorApp1.Server.Management.OT
 
 
         }
-        public static async Task DefinitivaAsync(string NumeroOrdenTrabajo, Usuario usuario)
+        public static async Task DefinitivaAsync(string NumeroOrdenTrabajo, IUsuario usuario)
         {
             string url = $"recogidas_repartos/definitivas_ordenes_trabajo.do?definitivas={NumeroOrdenTrabajo}";
             await ClienteWeb.Consultas.ConsultaGet.GetAsync(url, usuario);
