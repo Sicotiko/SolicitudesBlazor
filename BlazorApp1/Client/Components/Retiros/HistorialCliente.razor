@@ -1,0 +1,93 @@
+﻿@using BlazorApp1.Shared.Modelo.Retiros
+@inject IRetirosRepoService RetirosRepo
+@inject NotificationService Note
+
+<div class="container-fluid">
+    <div class="row px-3">
+        <div class="col-lg-6 col-xl-4 p-3">
+            <RadzenCard>
+                <RadzenText Text="Codigo Cliente" /> <br />
+                <RadzenTextBox @bind-Value="CodigoCliente" />
+            </RadzenCard>
+        </div>
+        <div class="col-lg-6 col-xl-4 p-3">
+            <RadzenCard>
+                <RadzenText Text="Desde" /> <br />
+                <RadzenDatePicker @bind-Value="Desde"
+                                  DateFormat="d" />
+            </RadzenCard>
+        </div>
+        <div class="col-lg-6 col-xl-4 p-3">
+            <RadzenCard>
+                <RadzenText Text="Hasta" /> <br />
+                <RadzenDatePicker @bind-Value="Hasta"
+                                  DateFormat="d" /> <br /><br />
+                <RadzenButton Text="Buscar"
+                              Click="BuscarCliente" />
+            </RadzenCard>
+        </div>
+    </div>
+</div>
+<RadzenCard>
+    <RadzenDataGrid TItem="Retiro"
+                    Data="RetirosHistorial"
+                    @ref="RetirosGrid"
+                    IsLoading="isLoading"
+                    AllowFiltering="true"
+                    AllowSorting="true"
+                    FilterMode="FilterMode.Simple">
+        <Columns>
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="CodigoRetiro"
+                                  Title="N° Retiro" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Nombre"
+                                  Title="Nombre" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Direccion"
+                                  Title="Direccion" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Comuna"
+                                  Title="Comuna" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Bultos"
+                                  Title="Bultos" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Kilos"
+                                  Title="Kilos" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Movil"
+                                  Title="Movil" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Ot"
+                                  Title="N° OT" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Estado"
+                                  Title="Estado" />
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+@code {
+    DateTime Desde = DateTime.Now.AddDays(-7);
+    DateTime Hasta = DateTime.Now;
+    IEnumerable<Retiro> RetirosHistorial;
+    string CodigoCliente = string.Empty;
+    RadzenDataGrid<Retiro> RetirosGrid;
+    bool isLoading = false;
+
+    private async Task BuscarCliente()
+    {
+        if (CodigoCliente == "")
+            Note.Notify(new NotificationMessage()
+                {
+                    Summary = "Ingrese Cliente",
+                    Detail = "El codigo del Cliente no puede ir vacio",
+                    Severity = NotificationSeverity.Warning,
+                    Duration = 5000
+                });
+        else
+            RetirosHistorial = await RetirosRepo.GetRetirosHistorialCliente(CodigoCliente, Desde, Hasta);
+
+        await RetirosGrid.Reload();
+    }
+}

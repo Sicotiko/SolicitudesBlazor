@@ -1,0 +1,22 @@
+﻿@page "/AsignacionBot"
+@using BlazorApp1.Shared.Excepciones
+@using BlazorApp1.Shared.User
+@inject NavigationManager navigation
+@inject Usuario user
+
+<AutoAsignacion/>
+@code {
+    protected override void OnInitialized()
+    {
+        try
+        {
+            user.GetCredentials();
+        }
+        catch
+        {
+            navigation.NavigateTo("/Configuracion");
+        }
+
+    }
+
+}

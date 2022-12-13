@@ -15,25 +15,32 @@ namespace BlazorApp1.Server.Management.OT
 
         private static async Task GetBodyOtAsync(int PaginaActual, int Movil, string Estado, DateTime FechaDesde, DateTime FechaHasta, IUsuario usuario, string NumeroOt = "")
         {
-            string url = $"recogidas_repartos/ordenes_trabajo_consulta.do?buscar=true";
+            try
+            {
+                string url = $"recogidas_repartos/ordenes_trabajo_consulta.do?buscar=true";
 
-            Dictionary<string, string> Parameters = new Dictionary<string, string>();
-            Parameters.Add("tipo_error", "");
-            Parameters.Add("mensaje", "");
-            Parameters.Add("pagina", PaginaActual.ToString());
-            Parameters.Add("masivo", "N");
-            Parameters.Add("repartidor_recogedor_codigo", MobileNumber.ToCCMobileNumber(Movil));
-            Parameters.Add("repartidor_recogedor_descripcion", "");
-            Parameters.Add("crr_codigo", "");
-            Parameters.Add("crr_descripcion", "");
-            Parameters.Add("estado", Estado);
-            Parameters.Add("codigo", NumeroOt);
-            Parameters.Add("fecha_desde", FechaDesde.ToShortDateString().Replace('-', '/'));
-            Parameters.Add("fecha_hasta", FechaHasta.ToShortDateString().Replace('-', '/'));
-            Parameters.Add("numero_envio", "");
-            Parameters.Add("incluir_ots_crr", "N");
+                Dictionary<string, string> Parameters = new Dictionary<string, string>();
+                Parameters.Add("tipo_error", "");
+                Parameters.Add("mensaje", "");
+                Parameters.Add("pagina", PaginaActual.ToString());
+                Parameters.Add("masivo", "N");
+                Parameters.Add("repartidor_recogedor_codigo", MobileNumber.ToCCMobileNumber(Movil));
+                Parameters.Add("repartidor_recogedor_descripcion", "");
+                Parameters.Add("crr_codigo", "");
+                Parameters.Add("crr_descripcion", "");
+                Parameters.Add("estado", Estado);
+                Parameters.Add("codigo", NumeroOt);
+                Parameters.Add("fecha_desde", FechaDesde.ToShortDateString().Replace('-', '/'));
+                Parameters.Add("fecha_hasta", FechaHasta.ToShortDateString().Replace('-', '/'));
+                Parameters.Add("numero_envio", "");
+                Parameters.Add("incluir_ots_crr", "N");
 
-            _Body = await Shared.ClienteWeb.Consultas.ConsultaPost.PostAsync(url, Parameters, usuario);
+                _Body = await Shared.ClienteWeb.Consultas.ConsultaPost.PostAsync(url, Parameters, usuario);
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         public static async Task<List<OrdenTrabajo>> GetOrdenesAsync(int Movil, string Estado, DateTime FechaDesde, DateTime FechaHasta, IUsuario usuario, string NumeroOt = "")

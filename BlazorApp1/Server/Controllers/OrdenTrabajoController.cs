@@ -1,5 +1,6 @@
 ﻿using BlazorApp1.Server.Controllers.OT;
 using BlazorApp1.Shared.ControllerModel;
+using BlazorApp1.Shared.Excepciones;
 using BlazorApp1.Shared.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,9 +28,13 @@ namespace BlazorApp1.Server.Controllers
             {
                 actionResult = Ok(await ordenTrabajoRepo.CreateOrden(Movil, usuario));
             }
-            catch (Exception ex)
+            catch (ConnectionException ConnEx)
             {
-                actionResult = BadRequest(ex.Message);
+                actionResult = StatusCode(900, ConnEx.Message);
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = StatusCode(901, CredEx.Message);
             }
 
             return actionResult;
@@ -43,9 +48,13 @@ namespace BlazorApp1.Server.Controllers
             {
                 actionResult = Ok(await ordenTrabajoRepo.CloseOrden(ordenToClose.ordenTrabajo, ordenToClose.usuario));
             }
-            catch (Exception ex)
+            catch (ConnectionException ConnEx)
             {
-                actionResult = BadRequest(ex.Message);
+                actionResult = StatusCode(900, ConnEx.Message);
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = StatusCode(901, CredEx.Message);
             }
 
             return actionResult;
@@ -64,9 +73,13 @@ namespace BlazorApp1.Server.Controllers
                 Estado = Estado.Replace("_", " ");
                 actionResult = Ok(await ordenTrabajoRepo.GetOrdenes(Movil, $"{Estado}", Desde, Hasta, usuario));
             }
-            catch (Exception ex)
+            catch (ConnectionException ConnEx)
             {
-                actionResult = BadRequest(ex.Message);
+                actionResult = StatusCode(900, ConnEx.Message);
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = StatusCode(901, CredEx.Message);
             }
 
 

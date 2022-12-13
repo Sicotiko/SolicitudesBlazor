@@ -1,4 +1,5 @@
-﻿using BlazorApp1.Shared.User;
+﻿using BlazorApp1.Shared.Excepciones;
+using BlazorApp1.Shared.User;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -19,10 +20,10 @@ namespace BlazorApp1.Server.ClienteWeb.Consultas
             }
             catch (Exception)
             {
-                throw new Exception("Compruebe su conexion a internet o VPN");
+                throw new ConnectionException("Compruebe su conexion a internet o VPN");
             }
             if (Body.Contains("Estado de HTTP 401"))
-                throw new Exception("Comprueba tus credenciales (Usuario y Pass)");
+                throw new CredentialsException("Comprueba tus credenciales (Usuario y Pass)");
 
             return Body;
         }
@@ -38,10 +39,10 @@ namespace BlazorApp1.Server.ClienteWeb.Consultas
             }
             catch (Exception)
             {
-                throw new Exception("Compruebe su conexion a internet o VPN");
+                throw new ConnectionException("Compruebe su conexion a internet o VPN");
             }
             if (Body.Contains("Estado de HTTP 401"))
-                throw new Exception("Comprueba tus credenciales (Usuario y Pass)");
+                throw new CredentialsException("Comprueba tus credenciales (Usuario y Pass)");
 
             return Body;
         }
@@ -56,10 +57,10 @@ namespace BlazorApp1.Server.ClienteWeb.Consultas
             }
             catch (Exception)
             {
-                throw new Exception("Compruebe su conexion a internet o VPN");
+                throw new ConnectionException("Compruebe su conexion a internet o VPN");
             }
             if (Body.Contains("Estado de HTTP 401"))
-                throw new Exception("Comprueba tus credenciales (Usuario y Pass)");
+                throw new CredentialsException("Comprueba tus credenciales (Usuario y Pass)");
 
             return Body;
         }

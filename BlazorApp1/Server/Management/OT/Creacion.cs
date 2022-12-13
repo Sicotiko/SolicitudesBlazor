@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BlazorApp1.Shared.Excepciones;
 
 namespace BlazorApp1.Server.Management.OT
 {
@@ -44,9 +45,9 @@ namespace BlazorApp1.Server.Management.OT
                     await DefinitivaAsync(ordenTrabajo.Numero, usuario);
 
             }
-            catch (Exception)
+            catch
             {
-                throw new Exception("Hubo un problema al crear la OT");
+                throw;
             }
             return ordenTrabajo;
 
@@ -54,8 +55,15 @@ namespace BlazorApp1.Server.Management.OT
         }
         public static async Task DefinitivaAsync(string NumeroOrdenTrabajo, IUsuario usuario)
         {
-            string url = $"recogidas_repartos/definitivas_ordenes_trabajo.do?definitivas={NumeroOrdenTrabajo}";
-            await ClienteWeb.Consultas.ConsultaGet.GetAsync(url, usuario);
+            try
+            {
+                string url = $"recogidas_repartos/definitivas_ordenes_trabajo.do?definitivas={NumeroOrdenTrabajo}";
+                await ClienteWeb.Consultas.ConsultaGet.GetAsync(url, usuario);
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

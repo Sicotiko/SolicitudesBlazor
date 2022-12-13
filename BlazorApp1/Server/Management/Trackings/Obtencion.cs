@@ -52,10 +52,9 @@ namespace BlazorApp1.Server.Management.Trackings
                 Retiro.TrackingList = trackList;
                 return trackList;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine(ex.Message);
-                throw new Exception(ex.Message);
+                throw;
             }
         }
     }

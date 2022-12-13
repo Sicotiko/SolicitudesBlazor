@@ -23,12 +23,12 @@ namespace BlazorApp1.Server.Controllers.Retiros
             return await Management.Retiros.Obtencion.GetReporteSucursalesAsync(FechaSolicitud, usuario);
         }
 
-        public async Task<IEnumerable<Retiro>> GetRetirosAsync(string TipoEntrada, string Comuna, DateTime FechaDesde, DateTime FechaHasta, IUsuario usuario, string EstadoRetiro = "", string Movil = "")
+        public async Task<IEnumerable<Retiro>> GetRetirosAsync(string TipoEntrada, string Comuna, DateTime FechaDesde, DateTime FechaHasta, IUsuario usuario, string EstadoRetiro = "", string Movil = "", string Cliente="")
         {
             int mobileNumber = 0;
             if (Movil != "")
                 mobileNumber = int.Parse(Movil);
-            return await Management.Retiros.Obtencion.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario, EstadoRetiro, Movil: mobileNumber);
+            return await Management.Retiros.Obtencion.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario, EstadoRetiro, Movil: mobileNumber, CodCliente: Cliente);
         }
     }
 }

@@ -30,9 +30,9 @@ namespace BlazorApp1.Server.Management.OT
                     estado = true;
 
             }
-            catch (Exception ex)
+            catch
             {
-                throw new Exception(ex.Message);
+                throw;
             }
             return estado;
         }

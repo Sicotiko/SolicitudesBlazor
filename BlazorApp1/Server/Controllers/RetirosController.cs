@@ -1,5 +1,6 @@
 ﻿using BlazorApp1.Server.Controllers.Retiros;
 using BlazorApp1.Shared.ControllerModel;
+using BlazorApp1.Shared.Excepciones;
 using BlazorApp1.Shared.Modelo.Retiros;
 using BlazorApp1.Shared.User;
 using Microsoft.AspNetCore.Http;
@@ -32,9 +33,13 @@ namespace BlazorApp1.Server.Controllers
                 await _retirosRepo.AsignarRetiroAsync(retiroToAssign._retiro, retiroToAssign._usuario);
                 actionResult = Ok();
             }
-            catch (System.Exception ex)
+            catch (ConnectionException ConnEx)
             {
-                actionResult = BadRequest($"No se logro asignar el retiro: {ex.Message} : {ex.InnerException}");
+                actionResult = StatusCode(502,ConnEx.Message); //badGateway
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = Unauthorized(CredEx.Message);
             }
 
             return actionResult;
@@ -58,9 +63,13 @@ namespace BlazorApp1.Server.Controllers
                 IEnumerable listadoRetiros = await _retirosRepo.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario, EstadoRetiro);
                 actionResult = Ok(listadoRetiros);
             }
-            catch (Exception ex)
+            catch (ConnectionException ConnEx)
             {
-                actionResult = BadRequest($"No se logro obtener retiros: {ex.Message} : {ex.InnerException}");
+                actionResult = StatusCode(502, ConnEx.Message); //badGateway
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = Unauthorized(CredEx.Message);
             }
 
             return actionResult;
@@ -81,9 +90,40 @@ namespace BlazorApp1.Server.Controllers
                 IEnumerable listadoRetiros = await _retirosRepo.GetRetirosAsync(TipoEntrada, "", FechaDesde, FechaHasta, usuario, EstadoRetiro, Movil: Movil);
                 actionResult = Ok(listadoRetiros);
             }
-            catch (Exception ex)
+            catch (ConnectionException ConnEx)
             {
-                actionResult = BadRequest($"No se logro obtener retiros: {ex.Message} : {ex.InnerException}");
+                actionResult = StatusCode(900, ConnEx.Message);
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = StatusCode(901, CredEx.Message);
+            }
+
+            return actionResult;
+        }
+
+        [HttpPost("GetRetirosByCliente/{diaDesde}/{mesDesde}/{anioDesde}/{diaHasta}/{mesHasta}/{anioHasta}")]
+        public async Task<IActionResult> GetRetirosByCliente(string diaDesde, string mesDesde, string anioDesde,
+                                                             string diaHasta, string mesHasta, string anioHasta,
+                                                             [FromBody] RetiroToHistorial retiroToHistorial)
+        {
+            IActionResult actionResult = BadRequest();
+
+            try
+            {
+                DateTime FechaDesde = DateTime.Parse($"{diaDesde}/{mesDesde}/{anioDesde}");
+                DateTime FechaHasta = DateTime.Parse($"{diaHasta}/{mesHasta}/{anioHasta}");
+
+                IEnumerable listadoRetiros = await _retirosRepo.GetRetirosAsync("", "", FechaDesde, FechaHasta, retiroToHistorial.usuario, Cliente: retiroToHistorial.CodigoCliente);
+                actionResult = Ok(listadoRetiros);
+            }
+            catch (ConnectionException ConnEx)
+            {
+                actionResult = StatusCode(900, ConnEx.Message);
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = StatusCode(901, CredEx.Message);
             }
 
             return actionResult;
@@ -99,16 +139,20 @@ namespace BlazorApp1.Server.Controllers
                 Retiro retiro = await _retirosRepo.GetDetalleAsync(NumeroRetiro, usuario);
                 actionResult = Ok(retiro);
             }
-            catch (Exception ex)
+            catch (ConnectionException ConnEx)
             {
-                actionResult = BadRequest($"No se logro obtener el detalle: {ex.Message} : {ex.InnerException}");
+                actionResult = StatusCode(900, ConnEx.Message);
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = StatusCode(901, CredEx.Message);
             }
 
             return actionResult;
         }
 
         [HttpPost("ReporteSucursal/{dia}/{mes}/{anio}")]
-        public async Task<IActionResult> ReporteSucursal([FromBody] Usuario usuario, string dia,string mes,string anio)
+        public async Task<IActionResult> ReporteSucursal([FromBody] Usuario usuario, string dia, string mes, string anio)
         {
             IActionResult actionResult = BadRequest();
 
@@ -118,9 +162,13 @@ namespace BlazorApp1.Server.Controllers
                 IEnumerable<Retiro> retiros = await _retirosRepo.GetReporteSucursalesAsync(FechaSolicitud, usuario);
                 actionResult = Ok(retiros);
             }
-            catch (Exception ex)
+            catch (ConnectionException ConnEx)
             {
-                actionResult = BadRequest($"No se logro obtener el reporte: {ex.Message} : {ex.InnerException}");
+                actionResult = StatusCode(900, ConnEx.Message);
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = StatusCode(901, CredEx.Message);
             }
 
             return actionResult;

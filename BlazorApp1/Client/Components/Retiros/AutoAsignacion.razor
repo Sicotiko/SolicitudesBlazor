@@ -1,22 +1,40 @@
-﻿@using BlazorApp1.Shared.Modelo.Comunas
+﻿@using BlazorApp1.Shared.Excepciones
+|@using BlazorApp1.Shared.Modelo.Comunas
 @using BlazorApp1.Shared.Utilities
 @inject IRetirosRepoService RetirosRepo
 @inject IOrdenTrabajoRepoService OrdenesRepo
 @inject NotificationService Note
+@inject DialogService dialog
 
-<RadzenCard>
-    <RadzenText Text="Fecha Origen" />
-    <RadzenDatePicker @bind-Value="FechaOrigen"
-                      DateFormat="d" />
-
-    <RadzenButton ButtonStyle="ButtonStyle.Primary"
-                  Text="Preparar Todo"
-                  Click="Preparacion" />
-    <RadzenButton ButtonStyle="ButtonStyle.Secondary"
-                  Text="Asignar Seleccionados"
-                  Click="Asignacion"
-                  Disabled="GridLoading" />
-</RadzenCard>
+<div class="container-fluid">
+    <div class="row px-3">
+        <div class="col-lg-6 col-xl-4 p-3">
+            <RadzenCard>
+                <RadzenText Text="Sector" />
+                <RadzenDropDown Data="@(Enum.GetValues(typeof(SectorName)).Cast<Enum>())"
+                                @bind-Value="sectorName" />
+            </RadzenCard>
+        </div>
+        <div class="col-lg-6 col-xl-4 p-3">
+            <RadzenCard>
+                <RadzenText Text="Fecha Origen" />
+                <RadzenDatePicker @bind-Value="FechaOrigen"
+                                  DateFormat="d" />
+            </RadzenCard>
+        </div>
+        <div class="col-lg-6 col-xl-4 p-3">
+            <RadzenCard>
+                <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                              Text="Preparar Todo"
+                              Click="Preparacion" />
+                <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                              Text="Asignar Seleccionados"
+                              Click="@(args => dialog.Confirm($"Confirme la asignacion del sector {sectorName.ToString()}", "Confirmacion", new ConfirmOptions() { OkButtonText = "Confirmar", CancelButtonText = "No" }))"
+                              Disabled="GridLoading" />
+            </RadzenCard>
+        </div>
+    </div>
+</div>
 @*<RadzenCard>*@
 <RadzenText Text="Retiros A Asignar" />
 <RadzenDataGrid TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
@@ -86,6 +104,31 @@
     RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridActual;
     bool GridLoading = false;
 
+
+    protected override void OnInitialized()
+    {
+        dialog.OnOpen += Open;
+        dialog.OnClose += Close;
+    }
+
+    public void Dispose()
+    {
+
+        dialog.OnOpen -= Open;
+        dialog.OnClose -= Close;
+    }
+    void Open(string title, Type type, Dictionary<string, object> parameters, DialogOptions options)
+    {
+    }
+
+    async void Close(dynamic result)
+    {
+        if (result != null)
+            if ((bool)result)
+                await Asignacion();
+    }
+
+
     private async Task PoblarRetirosOrigen()
     {
 
@@ -153,9 +196,32 @@
     private async Task Preparacion()
     {
         GridLoading = true;
-        await PoblarRetirosOrigen();
-        await PoblarRetirosActuales();
-        await MezclaRetiros();
+        try
+        {
+            await PoblarRetirosOrigen();
+            await PoblarRetirosActuales();
+            await MezclaRetiros();
+        }
+        catch (ExceptionResponse ex)
+        {
+            Note.Notify(new NotificationMessage()
+                {
+                    Summary = "Error",
+                    Detail = ex.Message,
+                    Severity = NotificationSeverity.Warning,
+                    Duration = 5000
+                });
+        }
+        catch (NullReferenceException nullEx)
+        {
+            Note.Notify(new NotificationMessage()
+                {
+                    Summary = "Error",
+                    Detail = nullEx.Message,
+                    Severity = NotificationSeverity.Warning,
+                    Duration = 5000
+                });
+        }
         GridLoading = false;
     }
     private async Task Asignacion()

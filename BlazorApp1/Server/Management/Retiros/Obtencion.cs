@@ -21,33 +21,40 @@ namespace BlazorApp1.Server.Management.Retiros
                                                        DateTime FechaHasta, string EstadoRetiro, int Movil,
                                                        string CodCliente, string Zona, IUsuario usuario)
         {
-            string url = $"recogidas_repartos/recogidas_consulta.do";
+            try
+            {
+                string url = $"recogidas_repartos/recogidas_consulta.do";
 
-            Dictionary<string, string> Parametros = new Dictionary<string, string>();
-            Parametros.Add("pagina", _PaginaActual.ToString());
-            Parametros.Add("sinZona_check", "false");
-            Parametros.Add("codigo", "");
-            Parametros.Add("tipo_servicio", "");
-            Parametros.Add("estado", EstadoRetiro);
-            Parametros.Add("recogedor_codigo", MobileNumber.ToCCMobileNumber(Movil));
-            Parametros.Add("telefono", "");
-            Parametros.Add("tipo_origen", "");
-            Parametros.Add("tipo_entrada", TipoEntrada);
-            Parametros.Add("codpRecogida_codigo", Comuna);
-            Parametros.Add("codpDestino_codigo", "");
-            Parametros.Add("cliente_codigo", CodCliente);
-            Parametros.Add("cliente_descripcion", "");
-            Parametros.Add("deleDestino_codigo", "");
-            Parametros.Add("deleDestino_descripcion", "");
-            Parametros.Add("fecha_desde_aux", FechaDesde.ToShortDateString().Replace('-', '/'));
-            Parametros.Add("fecha_hasta_aux", FechaHasta.ToShortDateString().Replace('-', '/'));
-            Parametros.Add("zona_codigo", Zona);
-            Parametros.Add("conIncidencia", "");
-            Parametros.Add("incidencia_codigo", "");
-            Parametros.Add("documentada", "");
-            Parametros.Add("autorizacion", "");
+                Dictionary<string, string> Parametros = new Dictionary<string, string>();
+                Parametros.Add("pagina", _PaginaActual.ToString());
+                Parametros.Add("sinZona_check", "false");
+                Parametros.Add("codigo", "");
+                Parametros.Add("tipo_servicio", "");
+                Parametros.Add("estado", EstadoRetiro);
+                Parametros.Add("recogedor_codigo", MobileNumber.ToCCMobileNumber(Movil));
+                Parametros.Add("telefono", "");
+                Parametros.Add("tipo_origen", "");
+                Parametros.Add("tipo_entrada", TipoEntrada);
+                Parametros.Add("codpRecogida_codigo", Comuna);
+                Parametros.Add("codpDestino_codigo", "");
+                Parametros.Add("cliente_codigo", CodCliente);
+                Parametros.Add("cliente_descripcion", "");
+                Parametros.Add("deleDestino_codigo", "");
+                Parametros.Add("deleDestino_descripcion", "");
+                Parametros.Add("fecha_desde_aux", FechaDesde.ToShortDateString().Replace('-', '/'));
+                Parametros.Add("fecha_hasta_aux", FechaHasta.ToShortDateString().Replace('-', '/'));
+                Parametros.Add("zona_codigo", Zona);
+                Parametros.Add("conIncidencia", "");
+                Parametros.Add("incidencia_codigo", "");
+                Parametros.Add("documentada", "");
+                Parametros.Add("autorizacion", "");
 
-            _Body = await Shared.ClienteWeb.Consultas.ConsultaPost.PostAsync(url, Parametros, usuario);
+                _Body = await Shared.ClienteWeb.Consultas.ConsultaPost.PostAsync(url, Parametros, usuario);
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         public static async Task<List<Retiro>> GetRetirosAsync(string TipoEntrada, string Comuna, DateTime FechaDesde,
@@ -96,7 +103,9 @@ namespace BlazorApp1.Server.Management.Retiros
                     foreach (var fila in RetirosTabla)
                     {
                         Retiro RetiroToAdd = await GetDetalleAsync(int.Parse(fila.GetAttributeValue("id", "").Replace("reco_", "")), usuario);
-                        //RetiroToAdd.Ot = //recorrer el nodo fila para encontrar el de la OT
+                        RetiroToAdd.Ot = Nodos.GetNodes(fila, "td")[16].InnerText;
+                        RetiroToAdd.Estado = Nodos.GetNodes(fila, "td")[14].InnerText;
+                        //RetiroToAdd.TrackingList = await Trackings.Obtencion.GetTracking(RetiroToAdd,usuario);
                         retiros.Add(RetiroToAdd);
                     }
                     _PaginaActual++;
@@ -106,9 +115,8 @@ namespace BlazorApp1.Server.Management.Retiros
                 return retiros;
 
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine(ex.Message);
                 throw;
             }
             return retiros;
@@ -237,9 +245,9 @@ namespace BlazorApp1.Server.Management.Retiros
 
                 retiro.Asignar = true;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine(ex.Message);
+                throw;
             }
 
             return retiro;
@@ -288,9 +296,9 @@ namespace BlazorApp1.Server.Management.Retiros
                     Retiros.Add(retiroActual);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                throw new Exception(ex.Message);
+                throw;
             }
             return Retiros;
         }
@@ -349,10 +357,9 @@ namespace BlazorApp1.Server.Management.Retiros
                 if(result is not null)
                     ret = result.ToList();
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine(ex.Message);
-                throw new Exception(ex.Message);
+                throw;
             }
 
             return ret;
@@ -381,10 +388,9 @@ namespace BlazorApp1.Server.Management.Retiros
                         //Console.WriteLine(rst.numeroSolicitud);
                     }
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine(ex.Message);
-                //throw new Exception(jsonList);
+                throw;
             }
 
             return ret;
