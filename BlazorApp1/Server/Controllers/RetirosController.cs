@@ -30,7 +30,7 @@ namespace BlazorApp1.Server.Controllers
 
             try
             {
-                await _retirosRepo.AsignarRetiroAsync(retiroToAssign._retiro, retiroToAssign._usuario);
+                await _retirosRepo.AsignarRetiroAsync(retiroToAssign.retiro, retiroToAssign.usuario);
                 actionResult = Ok();
             }
             catch (ConnectionException ConnEx)
@@ -173,6 +173,6 @@ namespace BlazorApp1.Server.Controllers
 
             return actionResult;
         }
-
+       
     }
 }

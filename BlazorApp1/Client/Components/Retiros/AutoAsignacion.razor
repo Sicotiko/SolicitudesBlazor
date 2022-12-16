@@ -1,10 +1,16 @@
 ﻿@using BlazorApp1.Shared.Excepciones
-|@using BlazorApp1.Shared.Modelo.Comunas
+@using BlazorApp1.Shared.Modelo.Comunas
+@using BlazorApp1.Shared.Modelo.Retiros
 @using BlazorApp1.Shared.Utilities
 @inject IRetirosRepoService RetirosRepo
 @inject IOrdenTrabajoRepoService OrdenesRepo
 @inject NotificationService Note
 @inject DialogService dialog
+
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH3" Text="Auto asignacion de Courier y Valijas:" />
+</RadzenCard>
+
 
 <div class="container-fluid">
     <div class="row px-3">
@@ -48,7 +54,9 @@
                 FilterMode="FilterMode.Simple"
                 IsLoading="GridLoading"
                 AllowColumnResize="true">
-
+    <EmptyTemplate>
+        <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">No hay retiros fijos pendientes.</p>
+    </EmptyTemplate>
     <Columns>
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Asignar"
@@ -63,7 +71,12 @@
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="CodigoRetiro"
                               Title="N° Retiro"
-                              Width="50" />
+                              Width="50">
+            <Template Context="retiro">
+                <RadzenButton Text="@retiro.CodigoRetiro"
+                              Click="@(args => OpenDetail(retiro))" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Nombre"
                               Title="Nombre"
@@ -131,6 +144,7 @@
 
     private async Task PoblarRetirosOrigen()
     {
+        //await BusyDialog("Leyendo retiros anteriores");
 
         RetirosOrigen = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
         var comunas = Comunas.GetComunasPorSector(sectorName);
@@ -145,10 +159,11 @@
             //Ordenar por algun campo el listado
         }
         //await gridOrigen.Reload();
-
     }
     private async Task PoblarRetirosActuales()
     {
+        //await BusyDialog("Leyendo retiros pendientes");
+
         RetirosActual = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
         var comunas = Comunas.GetComunasPorSector(sectorName);
         for (int i = 0; i < 2; i++)
@@ -156,20 +171,26 @@
             string TipoRetiro = i == 0 ? "COURIER" : "VALIJA";
             foreach (var comuna in comunas)
             {
+                //DEBUG
                 IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosPendientes(TipoRetiro, comuna.Value, FechaActual, FechaActual);
+                //IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosPendientes("FICHERO", comuna.Value, FechaActual, FechaActual);
+
                 RetirosActual.AddRange(retiros);
             }
             //Ordenar por algun campo el listado
         }
         await gridActual.Reload();
+
     }
 
     private async Task MezclaRetiros()
     {
+
         if (RetirosActual == null)
             throw new NullReferenceException($"{nameof(RetirosActual)} El listado no puede ser nulo.");
         if (RetirosOrigen == null)
             throw new NullReferenceException($"{nameof(RetirosOrigen)} El listado no puede ser nulo.");
+        //await BusyDialog("Haciendo la \"MAGIA\"");
 
         foreach (var retiro in RetirosActual)
         {
@@ -192,40 +213,78 @@
         //await gridOrigen.Reload();
         await gridActual.Reload();
     }
+    private async Task ObtenerOrdenTrabajo(Retiro retiro)
+    {
+        //await BusyDialog("Asignando N° de OT");
+
+
+        var ote = OrdenesRepo.Ordenes.FirstOrDefault(ot => ot.Tipo == retiro.TipoRetiro &&
+                                                           ot.Movil == retiro.Movil &&
+                                                           ot.Fecha == DateTime.Today &&
+                                                           ot.Estado != "CERRADA" &&
+                                                           ot.Repartos == 0);
+
+        if (ote == null)
+        {
+            ote = await OrdenesRepo.CreateOrden(int.Parse(retiro.Movil));
+            ote.Tipo = retiro.TipoRetiro;
+            ote.SectorName = sectorName;
+            ote.Comuna = retiro.Comuna;
+            OrdenesRepo.Ordenes.Add(ote);
+        }
+
+        retiro.Ot = ote.Numero;
+    }
 
     private async Task Preparacion()
     {
         GridLoading = true;
-        try
+
+        BusyDialog();
+        //await Task.Run(() => BusyDialog());
+
+        await InvokeAsync(async () =>
         {
-            await PoblarRetirosOrigen();
-            await PoblarRetirosActuales();
-            await MezclaRetiros();
-        }
-        catch (ExceptionResponse ex)
-        {
-            Note.Notify(new NotificationMessage()
-                {
-                    Summary = "Error",
-                    Detail = ex.Message,
-                    Severity = NotificationSeverity.Warning,
-                    Duration = 5000
-                });
-        }
-        catch (NullReferenceException nullEx)
-        {
-            Note.Notify(new NotificationMessage()
-                {
-                    Summary = "Error",
-                    Detail = nullEx.Message,
-                    Severity = NotificationSeverity.Warning,
-                    Duration = 5000
-                });
-        }
+            try
+            {
+                await PoblarRetirosOrigen();
+                await PoblarRetirosActuales();
+                await MezclaRetiros();
+                dialog.Close();
+            }
+            catch (ExceptionResponse ex)
+            {
+                dialog.Close();
+
+                Note.Notify(new NotificationMessage()
+                    {
+                        Summary = "Error",
+                        Detail = ex.Message,
+                        Severity = NotificationSeverity.Warning,
+                        Duration = 5000
+                    });
+            }
+            catch (NullReferenceException nullEx)
+            {
+                dialog.Close();
+
+                Note.Notify(new NotificationMessage()
+                    {
+                        Summary = "Error",
+                        Detail = nullEx.Message,
+                        Severity = NotificationSeverity.Warning,
+                        Duration = 5000
+                    });
+            }
+        });
+        //await BusyDialog();
+
         GridLoading = false;
     }
     private async Task Asignacion()
     {
+        BusyDialog();
+
         if (RetirosActual == null || RetirosOrigen == null)
             Note.Notify(new NotificationMessage()
                 {
@@ -237,7 +296,83 @@
         else
             foreach (var retiro in RetirosActual.Where(r => r.Asignar == true))
             {
+                if (retiro.Movil == "")
+                    continue;
+                await ObtenerOrdenTrabajo(retiro);
+
                 await RetirosRepo.AsignarAsync(retiro);
             }
+        dialog.Close();
+    }
+
+    public async Task OpenDetail(Retiro retiroModel)
+    {
+        await dialog.OpenAsync<RetiroDetalle>($"N° Retiro: {retiroModel.CodigoRetiro}",
+                                              new Dictionary<string, object>(){
+                                                  {
+                                                      "RetiroObject",
+                                                      retiroModel
+                                                  }
+                                              },
+                                              new DialogOptions()
+                                                  {
+                                                      Width = "700px",
+                                                      Height = "512px",
+                                                      Resizable = true,
+                                                      Draggable = true
+                                                  });
+    }
+    async Task BusyDialog(string message)
+    {
+        await dialog.OpenAsync("", ds =>
+        {
+            RenderFragment content = b =>
+            {
+                b.OpenElement(0, "div");
+                b.AddAttribute(1, "class", "row");
+
+                b.OpenElement(2, "div");
+                b.AddAttribute(3, "class", "col-md-12");
+
+                b.AddContent(4, message);
+
+                b.CloseElement();
+                b.CloseElement();
+            };
+            return content;
+        }, new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+
+
+    }
+
+    async Task BusyDialogAsync()
+    {
+        await dialog.OpenAsync("", ds =>
+    @<div>
+        <div class="row">
+            <div class="col text-center p-5">
+                <RadzenImage Path="Images/Loading.gif" Style="display: block; width: 200px; margin-bottom: 40px;" />
+                <b>Loading, please wait...</b>
+            </div>
+        </div>
+    </div>
+    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+
+        Console.WriteLine("Listo");
+    }
+    void BusyDialog()
+    {
+        dialog.Open("", ds =>
+    @<div>
+        <div class="row">
+            <div class="col text-center p-5">
+                <RadzenImage Path="Images/Loading.gif" Style="display: block; width: 200px; margin-bottom: 40px;" />
+                <b>Cargando...</b>
+            </div>
+        </div>
+    </div>
+    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+
+        Console.WriteLine("Listo");
     }
 }

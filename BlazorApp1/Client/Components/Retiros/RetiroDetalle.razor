@@ -1,0 +1,86 @@
+﻿@using BlazorApp1.Shared.Modelo.Retiros
+@inject DialogService Dialog
+
+<RadzenCard>
+    <div class="input-group mb-3">
+        <span class="input-group-text">Nombre: </span>
+        <RadzenText Text="@RetiroObject.Nombre" class="form-control" />
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text">Cod Cliente: </span>
+        <RadzenText Text="@RetiroObject.CodigoCliente" class="form-control" />
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text">Direccion: </span>
+        <RadzenText Text="@RetiroObject.Direccion" class="form-control" />
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text">Comuna: </span>
+        <RadzenText Text="@RetiroObject.Comuna" class="form-control" />
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text">AM: </span>
+        <RadzenDatePicker TimeOnly="true"
+                          ShowTime="true"
+                          DateFormat="HH:mm"
+                          @bind-Value="@RetiroObject.AmDesde"
+                          ReadOnly="true"
+                          class="form-control"
+                          Style="padding:0;"/>
+        <span class="input-group-text"> - </span>
+        <RadzenDatePicker TimeOnly="true"
+                          ShowTime="true"
+                          DateFormat="HH:mm"
+                          @bind-Value="@RetiroObject.AmHasta" 
+                          ReadOnly="true" 
+                          class="form-control" 
+                          Style="padding:0;"/>
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text">PM: </span>
+        <RadzenDatePicker TimeOnly="true"
+                          ShowTime="true"
+                          DateFormat="HH:mm"
+                          Style="padding:0;"
+                          @bind-Value="@RetiroObject.PmDesde"
+                          ReadOnly="true"
+                          class="form-control" />
+        <span class="input-group-text"> - </span>
+        <RadzenDatePicker TimeOnly="true"
+                          ShowTime="true"
+                          DateFormat="HH:mm"
+                          @bind-Value="@RetiroObject.PmHasta"
+                          ReadOnly="true"
+                          class="form-control"
+                          Style="padding:0;"/>
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text">Contacto: </span>
+        <RadzenText Text="@RetiroObject.Contacto" class="form-control" />
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text">Telefono: </span>
+        <RadzenText Text="@RetiroObject.Telefono" class="form-control" />
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text">Observacion: </span>
+        <RadzenText Text="@RetiroObject.Observacion" class="form-control" />
+    </div>
+    <div class="input-group mb-3">
+        <span class="input-group-text">Movil: </span>
+        <RadzenText Text="@RetiroObject.Movil" class="form-control" />
+    </div>
+</RadzenCard>
+
+<RadzenCard>
+    <div class="row">
+        <div class="col-md-12 text-end">
+            <RadzenButton Click="@((args) => Dialog.Close(false))" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Danger" Text="Cerrar" Style="width: 120px" Class="me-1" />
+        </div>
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public Retiro RetiroObject { get; set; }
+}

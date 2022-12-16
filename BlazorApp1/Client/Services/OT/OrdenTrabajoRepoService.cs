@@ -14,7 +14,7 @@ namespace BlazorApp1.Client.Services.OT
 {
     public class OrdenTrabajoRepoService : IOrdenTrabajoRepoService
     {
-        public List<OrdenTrabajo> Ordenes { get; set; }
+        public List<OrdenTrabajo> Ordenes { get; set; } = new List<OrdenTrabajo>();
         private readonly HttpClient _httpClient;
         private readonly Usuario _usuario;
         private JsonSerializerOptions _options;
