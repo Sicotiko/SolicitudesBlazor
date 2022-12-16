@@ -116,6 +116,7 @@
     //RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridOrigen;
     RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridActual;
     bool GridLoading = false;
+    int asignados = 0;
 
 
     protected override void OnInitialized()
@@ -194,6 +195,7 @@
 
         foreach (var retiro in RetirosActual)
         {
+            retiro.Movil = ""; // limpieza de movil asignado por sector por defecto
             var retiroToMix = RetirosOrigen.FirstOrDefault(r => r.Nombre == retiro.Nombre &&
                                                                 r.Direccion == retiro.Direccion &&
                                                                 r.Contacto == retiro.Contacto &&
@@ -279,12 +281,13 @@
         });
         //await BusyDialog();
 
+        ConfirmFinishedWork();
         GridLoading = false;
     }
     private async Task Asignacion()
     {
         BusyDialog();
-
+        asignados = 0;
         if (RetirosActual == null || RetirosOrigen == null)
             Note.Notify(new NotificationMessage()
                 {
@@ -301,6 +304,7 @@
                 await ObtenerOrdenTrabajo(retiro);
 
                 await RetirosRepo.AsignarAsync(retiro);
+                asignados++;
             }
         dialog.Close();
     }
@@ -322,44 +326,7 @@
                                                       Draggable = true
                                                   });
     }
-    async Task BusyDialog(string message)
-    {
-        await dialog.OpenAsync("", ds =>
-        {
-            RenderFragment content = b =>
-            {
-                b.OpenElement(0, "div");
-                b.AddAttribute(1, "class", "row");
-
-                b.OpenElement(2, "div");
-                b.AddAttribute(3, "class", "col-md-12");
-
-                b.AddContent(4, message);
-
-                b.CloseElement();
-                b.CloseElement();
-            };
-            return content;
-        }, new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
-
-
-    }
-
-    async Task BusyDialogAsync()
-    {
-        await dialog.OpenAsync("", ds =>
-    @<div>
-        <div class="row">
-            <div class="col text-center p-5">
-                <RadzenImage Path="Images/Loading.gif" Style="display: block; width: 200px; margin-bottom: 40px;" />
-                <b>Loading, please wait...</b>
-            </div>
-        </div>
-    </div>
-    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
-
-        Console.WriteLine("Listo");
-    }
+    
     void BusyDialog()
     {
         dialog.Open("", ds =>
@@ -373,6 +340,14 @@
     </div>
     , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
 
-        Console.WriteLine("Listo");
+        //Console.WriteLine("Listo");
+    }
+
+    void ConfirmFinishedWork()
+    {
+        dialog.Alert("Completo",$"{asignados} Retiros asignados", new AlertOptions()
+        {
+            OkButtonText="Ok"
+        });
     }
 }
