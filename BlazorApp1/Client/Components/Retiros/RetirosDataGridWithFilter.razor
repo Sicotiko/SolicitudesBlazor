@@ -1,5 +1,7 @@
 ﻿@using BlazorApp1.Shared.Modelo.Retiros
+@using BlazorApp1.Shared.Utilities
 @inject IRetirosRepoService retirosRepo
+@inject DialogService dialog
 
 <RadzenCard>
 
@@ -34,6 +36,14 @@
             <RadzenDataGridColumn TItem="Retiro"
                                   Property="CodigoRetiro"
                                   Title="N° Retiro" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="CodigoCliente"
+                                  Title="N° Cliente">
+                <Template Context="retiro">
+                    <RadzenButton Text="@retiro.CodigoCliente"
+                                  Click="(args => SearchHistorial(retiro))" />
+                </Template>
+            </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="Retiro"
                                   Property="Nombre"
                                   Title="Nombre Retiro" />
@@ -82,8 +92,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        //retiros = await retirosRepo.GetRetirosPendientes();
+        retiros = await retirosRepo.GetRetirosTodosLosEstados("TODOS", "7500000", DateTime.Today.AddDays(-1), DateTime.Today.AddDays(-1));
     }
 
+    private async Task SearchHistorial(Retiro retiro)
+    {
+        await retirosRepo.HistorialClienteInDialog(retiro);
+    }
 
 }

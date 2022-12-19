@@ -114,7 +114,7 @@ namespace BlazorApp1.Server.Controllers
                 DateTime FechaDesde = DateTime.Parse($"{diaDesde}/{mesDesde}/{anioDesde}");
                 DateTime FechaHasta = DateTime.Parse($"{diaHasta}/{mesHasta}/{anioHasta}");
 
-                IEnumerable listadoRetiros = await _retirosRepo.GetRetirosAsync("", "", FechaDesde, FechaHasta, retiroToHistorial.usuario, Cliente: retiroToHistorial.CodigoCliente);
+                IEnumerable listadoRetiros = await _retirosRepo.GetRetirosAsync("", retiroToHistorial.CodigoComuna, FechaDesde, FechaHasta, retiroToHistorial.usuario, Cliente: retiroToHistorial.CodigoCliente);
                 actionResult = Ok(listadoRetiros);
             }
             catch (ConnectionException ConnEx)

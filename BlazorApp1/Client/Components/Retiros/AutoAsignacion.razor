@@ -6,6 +6,8 @@
 @inject IOrdenTrabajoRepoService OrdenesRepo
 @inject NotificationService Note
 @inject DialogService dialog
+@inject LoadingScreen LoadScreen
+
 
 <RadzenCard>
     <RadzenText TextStyle="TextStyle.DisplayH3" Text="Auto asignacion de Courier y Valijas:" />
@@ -35,7 +37,7 @@
                               Click="Preparacion" />
                 <RadzenButton ButtonStyle="ButtonStyle.Secondary"
                               Text="Asignar Seleccionados"
-                              Click="@(args => dialog.Confirm($"Confirme la asignacion del sector {sectorName.ToString()}", "Confirmacion", new ConfirmOptions() { OkButtonText = "Confirmar", CancelButtonText = "No" }))"
+                              Click="ConfirmToAssign"
                               Disabled="GridLoading" />
             </RadzenCard>
         </div>
@@ -117,29 +119,31 @@
     RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridActual;
     bool GridLoading = false;
     int asignados = 0;
+    bool asignar = true;
 
 
     protected override void OnInitialized()
     {
-        dialog.OnOpen += Open;
-        dialog.OnClose += Close;
+        //dialog.OnOpen += Open;
+        //dialog.OnClose += Close;
     }
 
     public void Dispose()
     {
 
-        dialog.OnOpen -= Open;
-        dialog.OnClose -= Close;
+        //dialog.OnOpen -= Open;
+        //dialog.OnClose -= Close;
     }
     void Open(string title, Type type, Dictionary<string, object> parameters, DialogOptions options)
     {
     }
 
-    async void Close(dynamic result)
+    void Close(dynamic result)
     {
-        if (result != null)
-            if ((bool)result)
-                await Asignacion();
+        //if (result != null)
+        //    if (asignar)
+        //        if ((bool)result)
+        //            await Asignacion();
     }
 
 
@@ -242,8 +246,9 @@
     {
         GridLoading = true;
 
-        BusyDialog();
+        //BusyDialog();
         //await Task.Run(() => BusyDialog());
+        LoadScreen.Show("Cargando...");
 
         await InvokeAsync(async () =>
         {
@@ -252,11 +257,11 @@
                 await PoblarRetirosOrigen();
                 await PoblarRetirosActuales();
                 await MezclaRetiros();
-                dialog.Close();
+                LoadScreen.Close();
             }
             catch (ExceptionResponse ex)
             {
-                dialog.Close();
+                LoadScreen.Close();
 
                 Note.Notify(new NotificationMessage()
                     {
@@ -268,7 +273,7 @@
             }
             catch (NullReferenceException nullEx)
             {
-                dialog.Close();
+                LoadScreen.Close();
 
                 Note.Notify(new NotificationMessage()
                     {
@@ -281,12 +286,13 @@
         });
         //await BusyDialog();
 
-        ConfirmFinishedWork();
         GridLoading = false;
     }
     private async Task Asignacion()
     {
-        BusyDialog();
+
+        //BusyDialog();
+        LoadScreen.Show("Cargando...");
         asignados = 0;
         if (RetirosActual == null || RetirosOrigen == null)
             Note.Notify(new NotificationMessage()
@@ -306,7 +312,9 @@
                 await RetirosRepo.AsignarAsync(retiro);
                 asignados++;
             }
-        dialog.Close();
+        LoadScreen.Close();
+        ConfirmFinishedWork();
+
     }
 
     public async Task OpenDetail(Retiro retiroModel)
@@ -317,7 +325,7 @@
                                                       "RetiroObject",
                                                       retiroModel
                                                   }
-                                              },
+                                                                          },
                                               new DialogOptions()
                                                   {
                                                       Width = "700px",
@@ -326,28 +334,25 @@
                                                       Draggable = true
                                                   });
     }
-    
-    void BusyDialog()
+    async void ConfirmToAssign()
     {
-        dialog.Open("", ds =>
-    @<div>
-        <div class="row">
-            <div class="col text-center p-5">
-                <RadzenImage Path="Images/Loading.gif" Style="display: block; width: 200px; margin-bottom: 40px;" />
-                <b>Cargando...</b>
-            </div>
-        </div>
-    </div>
-    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+        bool? Confirm = await dialog.Confirm($"Confirme la asignacion del sector {sectorName.ToString()}", "Confirmacion", new ConfirmOptions()
+            {
+                OkButtonText = "Confirmar",
+                CancelButtonText = "No"
+            });
+        if (Confirm != null)
+            if ((bool)Confirm)
+                await Asignacion();
 
-        //Console.WriteLine("Listo");
     }
-
     void ConfirmFinishedWork()
     {
-        dialog.Alert("Completo",$"{asignados} Retiros asignados", new AlertOptions()
-        {
-            OkButtonText="Ok"
-        });
+        asignar = false;
+        dialog.Alert("Completo", $"{asignados} Retiros asignados", new AlertOptions()
+            {
+                OkButtonText = "Ok"
+            });
+        asignar = true;
     }
 }

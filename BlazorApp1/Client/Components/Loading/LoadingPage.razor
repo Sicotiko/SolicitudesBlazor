@@ -1,0 +1,14 @@
+﻿<div>
+    <div class="row">
+        <div class="col text-center p-5">
+            <RadzenImage Path="Images/Loading.gif" Style="display: block; width: 200px; margin-bottom: 40px;" />
+            <b>@LoadingMessage</b>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string LoadingMessage { get; set; } = string.Empty;
+
+}

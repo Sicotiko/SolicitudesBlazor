@@ -1,5 +1,6 @@
 ﻿@using BlazorApp1.Shared.Modelo.Retiros
 @inject IRetirosRepoService retiroRepo
+@inject LoadingScreen LoadScreen
 
 <RadzenCard>
     <RadzenText Text="Fecha de Reporte" />
@@ -30,10 +31,14 @@
             <Template Context="data">
                 @{
                     if (data.TrackingList.First().Tipo.Equals("DIAR"))
-                        {<RadzenText Text="Efectuado" />}
+                    {
+                        <RadzenText Text="Efectuado" />
+                    }
                     else
-                        {<RadzenText Text="No Efectuado" />}
-}
+                    {
+                        <RadzenText Text="No Efectuado" />
+                    }
+                }
             </Template>
         </RadzenDataGridColumn>
 
@@ -53,7 +58,21 @@
 
     private async Task ReportarClicked()
     {
-        if (DateValue != null)
-            retiros = await retiroRepo.GetReporteSucursalesAsync((DateTime)DateValue);
+        try
+        {
+
+            LoadScreen.Show("Cargando...");
+            //await InvokeAsync(async () =>
+            //{
+                retiros = await retiroRepo.GetReporteSucursalesAsync((DateTime)DateValue);
+ 
+
+            LoadScreen.Close();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"{ex.Message}");
+        }
+
     }
 }

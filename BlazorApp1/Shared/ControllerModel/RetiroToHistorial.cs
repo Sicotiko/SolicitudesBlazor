@@ -12,10 +12,13 @@ namespace BlazorApp1.Shared.ControllerModel
         public string CodigoCliente { get; private set; }
 
         public Usuario usuario { get; private set; }
-        public RetiroToHistorial(string CodigoCliente, Usuario usuario)
-        {
+        public string CodigoComuna { get; private set; } = "";
+
+        public RetiroToHistorial(string CodigoCliente, Usuario usuario,string CodigoComuna = "")
+        {    
             this.usuario = usuario;
             this.CodigoCliente = CodigoCliente;
+            this.CodigoComuna = CodigoComuna;
         }
     }
 }

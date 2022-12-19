@@ -1,0 +1,12 @@
+﻿@inject DialogService dialog
+
+@code {
+    public void Show(string Message)
+    {
+        dialog.Open<LoadingPage>("", new Dictionary<string, object>() { { "LoadingMessage", Message } }, new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+    public void Close()
+    {
+        dialog.Close();
+    }
+}

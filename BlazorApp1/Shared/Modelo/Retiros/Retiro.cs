@@ -35,13 +35,15 @@ namespace BlazorApp1.Shared.Modelo.Retiros
 
         //public async Task GetTrackingList()
         //{
-        //    //this.TrackingList =  await Management.Tracking.Obtencion.GetTracking(this);
+        //    this.TrackingList = await  Management.Tracking.Obtencion.GetTracking(this);
         //}
 
         //public async Task AsignarAsync()
         //{
-            
+
         //   //await SolicitudesNet60.Management.Retiros.Asignacion.Asignar(this);
         //}
+
+
     }
 }
