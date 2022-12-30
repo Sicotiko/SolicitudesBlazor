@@ -1,4 +1,7 @@
 using BlazorApp1.Client.Components.Loading;
+using BlazorApp1.Client.Services;
+using BlazorApp1.Client.Services.Dialogs;
+using BlazorApp1.Client.Services.Notifications;
 using BlazorApp1.Client.Services.OT;
 using BlazorApp1.Client.Services.Retiros;
 using BlazorApp1.Shared.User;
@@ -18,6 +21,7 @@ namespace BlazorApp1.Client
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
             builder.RootComponents.Add<App>("#app");
+            
 
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             builder.Services.AddBlazoredLocalStorage();
@@ -26,6 +30,8 @@ namespace BlazorApp1.Client
             //builder.Services.AddScoped<IUsuario, Usuario>();
             builder.Services.AddScoped<Usuario>();
 
+            //DEBUG
+            //builder.Services.AddScoped<PruebasServices>();
 
             builder.Services.AddScoped<DialogService>();
             builder.Services.AddScoped<NotificationService>();
@@ -34,6 +40,8 @@ namespace BlazorApp1.Client
 
             //builder.Services.AddScoped<LoadingDialog>();
             builder.Services.AddScoped<LoadingScreen>();
+            builder.Services.AddScoped<INoteService, NoteService>();
+            builder.Services.AddScoped<IDialogFrameService, DialogFrameService>();
 
 
             await builder.Build().RunAsync();

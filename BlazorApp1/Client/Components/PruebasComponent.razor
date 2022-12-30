@@ -1,0 +1,11 @@
+﻿@using BlazorApp1.Client.Services
+@inject PruebasServices proof
+
+<RadzenButton Text="Iniciar"
+              Click="Initiate"/>
+@code {
+    private async Task Initiate()
+    {
+        await proof.Iniciar();
+    }
+}

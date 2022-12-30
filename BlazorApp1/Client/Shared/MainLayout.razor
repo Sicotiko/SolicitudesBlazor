@@ -1,21 +1,55 @@
-﻿@inherits LayoutComponentBase
+﻿@using BlazorApp1.Shared.User
+@inherits LayoutComponentBase
+@inject Usuario usuario
 
-    <RadzenDialog/>
-    <RadzenNotification/>
-    <RadzenContextMenu/>
-    <RadzenTooltip/>
+<RadzenDialog />
+<RadzenNotification />
+<RadzenContextMenu />
+<RadzenTooltip />
 <div class="page">
-    <div class="sidebar">
+    @*<div class="sidebar">
         <NavMenu />
-    </div>
-
-    <div class="main">
-        @*<div class="top-row px-4">
-            <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
-        </div>*@
-
-        <div class="content px-4">
-            @Body
         </div>
+
+        <div class="main">
+        <div class="top-row px-4">
+        <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
+        </div>
+        <RadzenBody>
+        <div class="content px-2">
+        @Body
+        </div>
+        </RadzenBody>
+
+        </div>*@
+    <div class="main">
+
+        <RadzenLayout class="rz-shadow-3" Style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'">
+            <RadzenHeader>
+                <div class="d-flex align-items-center">
+                    <RadzenSidebarToggle Click="@(() => collapseNavMenu = !collapseNavMenu)" />
+                    <RadzenLabel Text="Rorschach's Code" />
+                </div>
+            </RadzenHeader>
+            <RadzenSidebar @bind-Expanded="@collapseNavMenu" class="rz-color-white rz-background-color-primary-darker">
+                <RadzenPanelMenu class=" rz-color-white rz-background-color-primary-darker" Style="@fontStyle">
+                    <RadzenPanelMenuItem Text="Inicio" Icon="home" Path="/" />
+                    <RadzenPanelMenuItem Text="Asignación" Icon="home" Path="Asignacion" Visible=@(usuario.PaswordInBase64 != null) />
+                    <RadzenPanelMenuItem Text="Bot Asignación" Icon="smart_toy" Path="AsignacionBot" Visible=@(usuario.PaswordInBase64 != null) />
+                    <RadzenPanelMenuItem Text="Reporte Sucursal" Icon="summarize" Path="SucursalReport" Visible=@(usuario.PaswordInBase64 != null)/>
+                    <RadzenPanelMenuItem Text="Configuracion" Icon="settings" Path="Configuracion"/>
+                </RadzenPanelMenu>
+
+            </RadzenSidebar>
+            <RadzenBody>
+                <div class="content px-2">
+                    @Body
+                </div>
+            </RadzenBody>
+        </RadzenLayout>
     </div>
 </div>
+@code {
+    private bool collapseNavMenu = false;
+    private string fontStyle = @"font-weight:800;font-size:1.2rem";
+}

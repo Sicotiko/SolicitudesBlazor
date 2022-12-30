@@ -1,11 +1,13 @@
-﻿@using BlazorApp1.Shared.Excepciones
+﻿@using BlazorApp1.Client.Services.Dialogs
+@using BlazorApp1.Client.Services.Notifications
+@using BlazorApp1.Shared.Excepciones
 @using BlazorApp1.Shared.Modelo.Comunas
 @using BlazorApp1.Shared.Modelo.Retiros
 @using BlazorApp1.Shared.Utilities
 @inject IRetirosRepoService RetirosRepo
 @inject IOrdenTrabajoRepoService OrdenesRepo
-@inject NotificationService Note
-@inject DialogService dialog
+@inject INoteService Note
+@inject IDialogFrameService dialog
 @inject LoadingScreen LoadScreen
 
 
@@ -263,25 +265,13 @@
             {
                 LoadScreen.Close();
 
-                Note.Notify(new NotificationMessage()
-                    {
-                        Summary = "Error",
-                        Detail = ex.Message,
-                        Severity = NotificationSeverity.Warning,
-                        Duration = 5000
-                    });
+                Note.NotifyResponse(ex);
             }
             catch (NullReferenceException nullEx)
             {
                 LoadScreen.Close();
 
-                Note.Notify(new NotificationMessage()
-                    {
-                        Summary = "Error",
-                        Detail = nullEx.Message,
-                        Severity = NotificationSeverity.Warning,
-                        Duration = 5000
-                    });
+                Note.NotifyNull(nullEx);
             }
         });
         //await BusyDialog();
@@ -295,21 +285,25 @@
         LoadScreen.Show("Cargando...");
         asignados = 0;
         if (RetirosActual == null || RetirosOrigen == null)
-            Note.Notify(new NotificationMessage()
-                {
-                    Summary = "Datos Faltantes",
-                    Detail = "Primero prepara Todo",
-                    Severity = NotificationSeverity.Warning,
-                    Duration = 5000
-                });
+            Note.NotifyVoidData();
         else
             foreach (var retiro in RetirosActual.Where(r => r.Asignar == true))
             {
                 if (retiro.Movil == "")
                     continue;
-                await ObtenerOrdenTrabajo(retiro);
+                try
+                {
+                    await ObtenerOrdenTrabajo(retiro);
 
-                await RetirosRepo.AsignarAsync(retiro);
+                    await RetirosRepo.AsignarAsync(retiro);
+                }catch(ExceptionResponse exres)
+                {
+                    Note.NotifyResponse(exres);
+                }catch(NullReferenceException nullex)
+                {
+                    Note.NotifyNull(nullex);
+                }
+
                 asignados++;
             }
         LoadScreen.Close();
@@ -319,40 +313,20 @@
 
     public async Task OpenDetail(Retiro retiroModel)
     {
-        await dialog.OpenAsync<RetiroDetalle>($"N° Retiro: {retiroModel.CodigoRetiro}",
-                                              new Dictionary<string, object>(){
-                                                  {
-                                                      "RetiroObject",
-                                                      retiroModel
-                                                  }
-                                                                          },
-                                              new DialogOptions()
-                                                  {
-                                                      Width = "700px",
-                                                      Height = "512px",
-                                                      Resizable = true,
-                                                      Draggable = true
-                                                  });
+        await dialog.OpenRetiroDetailAsync(retiroModel);
     }
     async void ConfirmToAssign()
     {
-        bool? Confirm = await dialog.Confirm($"Confirme la asignacion del sector {sectorName.ToString()}", "Confirmacion", new ConfirmOptions()
-            {
-                OkButtonText = "Confirmar",
-                CancelButtonText = "No"
-            });
+        bool? Confirm = await dialog.OpenConfirmDialogAsync($"Confirme la asignacion del sector {sectorName.ToString()}", "Confirmacion");
         if (Confirm != null)
             if ((bool)Confirm)
                 await Asignacion();
 
     }
-    void ConfirmFinishedWork()
+    async void ConfirmFinishedWork()
     {
         asignar = false;
-        dialog.Alert("Completo", $"{asignados} Retiros asignados", new AlertOptions()
-            {
-                OkButtonText = "Ok"
-            });
+        await dialog.OpenAlertDialogAsync($"{asignados} Retiros asignados","Completo");
         asignar = true;
     }
 }

@@ -1,0 +1,21 @@
+﻿@page "/Asignacion"
+@using BlazorApp1.Shared.User
+@inject NavigationManager navigation
+@inject Usuario user
+
+<Asignacion />
+@code {
+    protected override void OnInitialized()
+    {
+        try
+        {
+            user.GetCredentials();
+        }
+        catch
+        {
+            navigation.NavigateTo("/Configuracion");
+        }
+
+    }
+
+}

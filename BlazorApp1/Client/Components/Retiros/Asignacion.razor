@@ -1,5 +1,212 @@
-﻿<h3>Asignacion</h3>
+﻿@using BlazorApp1.Client.Services.Dialogs
+@using BlazorApp1.Client.Services.Notifications
+@using BlazorApp1.Shared.Excepciones
+@using BlazorApp1.Shared.Modelo.Comunas
+@using BlazorApp1.Shared.Modelo.Retiros
+@using BlazorApp1.Shared.Utilities
+@inject IRetirosRepoService RetirosRepo
+@inject IOrdenTrabajoRepoService OrdenesRepo
+@inject INoteService Note
+@inject IDialogFrameService dialog
+@inject LoadingScreen LoadScreen
+
+
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH2" Text="Asignacion de retiros por sector:" />
+</RadzenCard>
+
+
+<div class="container-fluid">
+    <div class="row px-3">
+        <div class="col-lg-6 col-xl-4 p-3">
+            <RadzenCard>
+                <RadzenText Text="Sector" />
+                <RadzenDropDown Data="@(Enum.GetValues(typeof(SectorName)).Cast<Enum>())"
+                                @bind-Value="sectorName" />
+            </RadzenCard>
+        </div>
+        <div class="col-lg-6 col-xl-4 p-3">
+            <RadzenCard>
+                <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                              Text="Actualizar"
+                              Icon="sync"
+                              Click="PoblarRetirosOrigen" />
+            </RadzenCard>
+        </div>
+        <div class="col-lg-6 col-xl-4 p-3">
+            <RadzenCard>
+                <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                              Text="Asignar Seleccionados"
+                              Icon="assignment_turned_in"
+                              Click="ConfirmToAssign"
+                              Disabled="GridLoading" />
+            </RadzenCard>
+        </div>
+    </div>
+</div>
+@*<RadzenCard>*@
+<RadzenText Text="Retiros A Asignar" />
+<RadzenDataGrid TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                Data="RetirosActual"
+                @ref="gridActual"
+                AllowPaging="true"
+                PageSize="50"
+                AllowAlternatingRows="true"
+                AllowSorting="true"
+                AllowFiltering="true"
+                FilterMode="FilterMode.Simple"
+                IsLoading="GridLoading"
+                AllowColumnResize="true"
+                ColumnWidth="50px">
+    <EmptyTemplate>
+        <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">No hay retiros pendientes.</p>
+    </EmptyTemplate>
+    <Columns>
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Asignar"
+                              Title="Asignar?"
+                              Filterable="false"
+                              Sortable="false"
+                              Width="60px">
+            <Template Context="retiro">
+                <RadzenCheckBox @bind-Value="retiro.Asignar" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="CodigoRetiro"
+                              Title="N° Retiro"
+                              Width="122px">
+            <Template Context="retiro">
+                <RadzenButton Text="@retiro.CodigoRetiro"
+                              Click="@(args => OpenDetail(retiro))" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Nombre"
+                              Title="Nombre"
+                              Width="200px" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="CodigoCliente"
+                              Title="N° Cliente"
+                              Width="85px" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Direccion"
+                              Title="Direccion"
+                              Width="250px" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Comuna"
+                              Title="Comuna"
+                              Width="100px" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Movil"
+                              Title="Movil"
+                              Width="85px">
+            <Template Context="retiro">
+                <RadzenTextBox @bind-Value="retiro.Movil"
+                               MaxLength="6" />
+            </Template>
+        </RadzenDataGridColumn>
+
+    </Columns>
+</RadzenDataGrid>
+
 
 @code {
+    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosActual;
+    SectorName sectorName;
+    RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridActual;
+    bool GridLoading = false;
+    int asignados = 0;
 
+
+    private async Task PoblarRetirosOrigen()
+    {
+        RetirosActual = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
+        var comunas = Comunas.GetComunasPorSector(sectorName);
+
+        foreach (var comuna in comunas)
+        {
+            RetirosActual.AddRange(await RetirosRepo.GetRetirosPendientes("TODOS", comuna.Value, DateTime.Today, DateTime.Today));
+        }
+
+    }
+
+    private async Task ObtenerOrdenTrabajo(Retiro retiro)
+    {
+        //await BusyDialog("Asignando N° de OT");
+
+
+        var ote = OrdenesRepo.Ordenes.FirstOrDefault(ot => ot.Tipo == retiro.TipoRetiro &&
+                                                           ot.Movil == retiro.Movil &&
+                                                           ot.Fecha == DateTime.Today &&
+                                                           ot.Estado != "CERRADA" &&
+                                                           ot.Repartos == 0);
+
+        if (ote == null)
+        {
+            ote = await OrdenesRepo.CreateOrden(int.Parse(retiro.Movil));
+            ote.Tipo = retiro.TipoRetiro;
+            ote.SectorName = sectorName;
+            ote.Comuna = retiro.Comuna;
+            OrdenesRepo.Ordenes.Add(ote);
+        }
+
+        retiro.Ot = ote.Numero;
+    }
+
+    private async Task AsignacionAsync()
+    {
+
+        LoadScreen.Show("Cargando...");
+        asignados = 0;
+        foreach (var retiro in RetirosActual.Where(r => r.Asignar == true))
+        {
+            if (retiro.Movil == "")
+                continue;
+            await ObtenerOrdenTrabajo(retiro);
+
+            await RetirosRepo.AsignarAsync(retiro);
+            asignados++;
+        }
+        LoadScreen.Close();
+        ConfirmFinishedWork();
+
+    }
+
+    async void ConfirmToAssign()
+    {
+        bool? Confirm = await dialog.OpenConfirmDialogAsync($"Confirme la asignacion del sector {sectorName.ToString()}", "Confirmacion");
+
+        if (Confirm != null)
+            if ((bool)Confirm)
+            {
+                try
+                {
+                    await AsignacionAsync();
+
+                }
+                catch (ExceptionResponse ex)
+                {
+                    LoadScreen.Close();
+
+                    Note.NotifyResponse(ex);
+                }
+                catch (NullReferenceException nullEx)
+                {
+                    LoadScreen.Close();
+
+                    Note.NotifyNull(nullEx);
+                }
+            }
+
+    }
+
+    void ConfirmFinishedWork()
+    {
+        dialog.OpenAlertDialogAsync($"{asignados} Retiros asignados", "Completo");
+    }
+    public async Task OpenDetail(Retiro retiroModel)
+    {
+        await dialog.OpenRetiroDetailAsync(retiroModel);
+    }
 }

@@ -6,41 +6,61 @@
         <span class="navbar-toggler-icon"></span>
     </button>
 </div>
+@*<RadzenLayout class="rz-shadow-3" Style="height: 400px; grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'">*@
+    <RadzenHeader>
+        <div class="d-flex align-items-center">
+            <RadzenSidebarToggle Click="@(() => collapseNavMenu = !collapseNavMenu)" />
+            <RadzenLabel Text="Header" />
+        </div>
+    </RadzenHeader>
+    <RadzenSidebar @bind-Expanded="@collapseNavMenu">
+        <RadzenPanelMenu>
+            <RadzenPanelMenuItem Text="Inicio" Icon="home" Path="/"/>
+            <RadzenPanelMenuItem Text="Asignación" Icon="home" Path="Asignacion"/>
+            <RadzenPanelMenuItem Text="Bot Asignación" Icon="bot_toy" Path="AsignacionBot"/>
+            <RadzenPanelMenuItem Text="Reporte Sucursal" Icon="summarize" Path="AsignacionBot"/>
+            <RadzenPanelMenuItem Text="Configuracion" Icon="" Path="Configuracion" />
+        </RadzenPanelMenu>
+        
+    </RadzenSidebar>
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+@*</RadzenLayout>*@
+
+
+@*<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
     <ul class="nav flex-column">
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home .rz-color-secondary-darker" aria-hidden="true"></span> Home
-            </NavLink>
-        </li>
-        @*<li class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="oi oi-plus" aria-hidden="true"></span> Counter
-            </NavLink>
-        </li>*@
-        <li class="nav-item px-3" hidden="@(usuario.PaswordInBase64 == null)">
-            <NavLink class="nav-link" href="AsignacionBot">
-                <span class="oi oi-basket" aria-hidden="true"></span> Asignacion Bot
-            </NavLink>
-        </li>
-        <li class="nav-item px-3" hidden="@(usuario.PaswordInBase64 == null)">
-            <NavLink class="nav-link" href="SucursalReport">
-                <span class="oi oi-list" aria-hidden="true"></span> Reporte Sucursal
-            </NavLink>
-        </li>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="Configuracion">
-                <span class="oi oi-wrench" aria-hidden="true"></span> Configuracion
-            </NavLink>
-        </li>
-        @*<li class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-            </NavLink>
-        </li>*@
+    <li class="nav-item px-3">
+    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+    <span class="oi oi-home .rz-color-secondary-darker" aria-hidden="true"></span> Home
+    </NavLink>
+    </li>
+    <li class="nav-item px-3">
+    <NavLink class="nav-link" href="counter">
+    <span class="oi oi-plus" aria-hidden="true"></span> Counter
+    </NavLink>
+    </li>
+    <li class="nav-item px-3" hidden="@(usuario.PaswordInBase64 == null)">
+    <NavLink class="nav-link" href="AsignacionBot">
+    <span class="oi oi-basket" aria-hidden="true"></span> Asignacion Bot
+    </NavLink>
+    </li>
+    <li class="nav-item px-3" hidden="@(usuario.PaswordInBase64 == null)">
+    <NavLink class="nav-link" href="SucursalReport">
+    <span class="oi oi-list" aria-hidden="true"></span> Reporte Sucursal
+    </NavLink>
+    </li>
+    <li class="nav-item px-3">
+    <NavLink class="nav-link" href="Configuracion">
+    <span class="oi oi-wrench" aria-hidden="true"></span> Configuracion
+    </NavLink>
+    </li>
+    <li class="nav-item px-3">
+    <NavLink class="nav-link" href="fetchdata">
+    <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
+    </NavLink>
+    </li>
     </ul>
-</div>
+    </div>*@
 
 @code {
     private bool collapseNavMenu = true;
