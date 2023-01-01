@@ -59,6 +59,7 @@ namespace BlazorApp1.Server.Controllers
                 DateTime FechaHasta = DateTime.Parse($"{diaHasta}/{mesHasta}/{anioHasta}");
                 if (EstadoRetiro == "TODOS")
                     EstadoRetiro = "";
+                TipoEntrada = TipoEntrada == "TODOS" ? "" : TipoEntrada;
 
                 IEnumerable listadoRetiros = await _retirosRepo.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario, EstadoRetiro);
                 actionResult = Ok(listadoRetiros);

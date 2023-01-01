@@ -46,5 +46,17 @@ namespace BlazorApp1.Client.Services.Notifications
                 Duration = DurationLocal
             });
         }
+
+
+        public void NotifyTime()
+        {
+            notificationService.Notify(new NotificationMessage()
+            {
+                Summary = "Tiempo Invalido!",
+                Detail = "Selecciona un tiempo mayor a 15 segundos.",
+                Severity = NotificationSeverity.Warning,
+                Duration = DurationLocal
+            });
+        }
     }
 }

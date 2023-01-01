@@ -8,5 +8,6 @@ namespace BlazorApp1.Client.Services.Notifications
         public void NotifyResponse(ExceptionResponse exceptionResponse);
         public void NotifyNull(NullReferenceException nullReferenceException);
         public void NotifyVoidData();
+        public void NotifyTime();
     }
 }

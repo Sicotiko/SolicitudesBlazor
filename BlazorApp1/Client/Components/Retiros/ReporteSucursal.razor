@@ -1,6 +1,9 @@
-﻿@using BlazorApp1.Shared.Modelo.Retiros
+﻿@using BlazorApp1.Client.Services.Notifications
+@using BlazorApp1.Shared.Excepciones
+@using BlazorApp1.Shared.Modelo.Retiros
 @inject IRetirosRepoService retiroRepo
 @inject LoadingScreen LoadScreen
+@inject INoteService Note
 
 <RadzenCard>
     <RadzenText Text="Fecha de Reporte" />
@@ -64,15 +67,25 @@
             LoadScreen.Show("Cargando...");
             //await InvokeAsync(async () =>
             //{
-                retiros = await retiroRepo.GetReporteSucursalesAsync((DateTime)DateValue);
- 
+            retiros = await retiroRepo.GetReporteSucursalesAsync((DateTime)DateValue);
+
 
             LoadScreen.Close();
         }
-        catch (Exception ex)
+        catch (ExceptionResponse exres)
         {
-            Console.WriteLine($"{ex.Message}");
+            Note.NotifyResponse(exres);
+
+        }catch(NullReferenceException nullref)
+        {
+            Note.NotifyNull(nullref);
         }
+        finally
+        {
+            LoadScreen.Close();
+        }
+
+
 
     }
 }
