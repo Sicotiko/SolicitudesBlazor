@@ -58,5 +58,27 @@ namespace BlazorApp1.Client.Services.Notifications
                 Duration = DurationLocal
             });
         }
+
+        public void NotifyOtNoCerrada(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
+        {
+            notificationService.Notify(new NotificationMessage()
+            {
+                Summary = $"No Cerrada ({ordenTrabajo.Movil})",
+                Detail = $"La OT {ordenTrabajo.Numero} no se cerró.",
+                Severity = NotificationSeverity.Warning,
+                Duration = DurationLocal
+            });
+        }
+
+        public void NotifyOtCerrada(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
+        {
+            notificationService.Notify(new NotificationMessage()
+            {
+                Summary = $"OT Cerrada",
+                Detail = $"La OT {ordenTrabajo.Numero} se cerró exitosamente.",
+                Severity = NotificationSeverity.Success,
+                Duration = DurationLocal
+            });
+        }
     }
 }

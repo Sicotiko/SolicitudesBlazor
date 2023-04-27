@@ -16,6 +16,11 @@ namespace BlazorApp1.Server.ClienteWeb
 
         public static HttpClient GetClient(IUsuario usuario)
         {
+            HttpClient localClient = new HttpClient();
+
+            try
+            {
+
             //HttpClient cliente = new HttpClient();
             if(Clients.TryGetValue(usuario.GetCredentials(), out var cliente))
                 return cliente;
@@ -23,14 +28,19 @@ namespace BlazorApp1.Server.ClienteWeb
             var byteArray = Encoding.ASCII.GetBytes(usuario.GetCredentials());
             
             var header = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-            HttpClient localClient = new HttpClient();
             localClient.DefaultRequestHeaders.Authorization = header;
             localClient.BaseAddress = new Uri("http://padua.icorreos.cl/padua/");
             Clients.Add(usuario.GetCredentials(), localClient);
 
+            }
+            catch 
+            {
+                throw;
+            }
             return localClient;
+
         }
-        
+
         public static HttpClient GetClientForMC(IUsuario usuario)
         {
             if (Clients.TryGetValue(usuario.GetCredentials(), out var cliente))

@@ -85,5 +85,11 @@ namespace BlazorApp1.Server.Controllers
 
             return actionResult;
         }
+
+        //[HttpPost("ExportXLS")]
+        //public async Task<IActionResult> Export([FromBody] List<Shared.Modelo.OT.OrdenTrabajo> Ordenes)
+        //{
+
+        //}
     }
 }

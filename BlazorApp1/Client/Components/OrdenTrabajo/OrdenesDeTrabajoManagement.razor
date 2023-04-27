@@ -1,24 +1,41 @@
-﻿@using BlazorApp1.Client.Services.OT
+﻿@using BlazorApp1.Client.Services.Dialogs
+@using BlazorApp1.Client.Services.Notifications
+@using BlazorApp1.Client.Services.OT
+@using BlazorApp1.Shared.Excepciones
 @inject IOrdenTrabajoRepoService OTRepo
-@inject NotificationService Notification
+@inject INoteService note
+@inject IDialogFrameService dialog
+@inject LoadingScreen loading
+@inject IJSRuntime Js
 
-<RadzenCard>
-    <div class="input-group">
-        <span class="input-group-text">Fecha Desde</span>
-        <RadzenDatePicker DateFormat="d" @bind-Value="FechaDesde" />
+<div class="row">
+    <div class="col">
+        <RadzenCard>
+            <div class="input-group">
+                <span class="input-group-text">Fecha Desde</span>
+                <RadzenDatePicker DateFormat="d" @bind-Value="FechaDesde" />
+            </div>
+            <div class="input-group">
+                <span class="input-group-text">Fecha Hasta</span>
+                <RadzenDatePicker DateFormat="d" @bind-Value="FechaHasta" />
+            </div>
+            <RadzenButton Text="Actualizar" Click="Update" />
+        </RadzenCard>
     </div>
-    <div class="input-group">
-        <span class="input-group-text">Fecha Hasta</span>
-        <RadzenDatePicker DateFormat="d" @bind-Value="FechaHasta" />
-    </div>
-    <RadzenButton Text="Actualizar" Click="Update" />
-</RadzenCard>
+    <div class="col">
+        <RadzenCard>
+            <RadzenButton Text="Cierre Automatico" Click="AutoClose" />
 
+            <RadzenButton Text="Exportar"
+                          Click="@Exportar"/>
+        </RadzenCard>
+    </div>
+</div>
 <RadzenCard>
     <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Class="mt-2 mb-4" Text="Nueva OT" Click="@InsertRow" Disabled=@(ordenToInsert != null) />
     <RadzenDataGrid @ref="OrdenesGrid"
                     TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
-                    Data="OTRepo.Ordenes"
+                    Data="OTRepo.Ordenes.Where(ot => ot.Repartos == 0)"
                     AllowPaging="true"
                     PageSize="50"
                     AllowSorting="true"
@@ -46,7 +63,11 @@
             <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
                                   Property="Fecha"
                                   Title="Fecha"
-                                  Width="100px" />
+                                  Width="100px">
+                <Template Context="data">
+                    <RadzenLabel Text=@data.Fecha.ToShortDateString() />
+                </Template>
+            </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
                                   Property="Comuna"
                                   Title="Comuna"
@@ -93,9 +114,59 @@
     DateTime FechaDesde = DateTime.Today;
     DateTime FechaHasta = DateTime.Today;
 
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    await OTRepo.UpdateOrdenes(0, "DEFINITIVA",FechaDesde,FechaHasta);
+    //}
+
+    private async Task AutoClose()
+    {
+        try
+        {
+            int OtCerradas = 0;
+
+            loading.Show("Cerrando OT's");
+            var otes = OTRepo.Ordenes.Where(ot => ot.Repartos == 0);
+            foreach (var ote in otes)
+            {
+                if (await OTRepo.CloseOrden(ote))
+                    OtCerradas++;
+            }
+
+            await dialog.OpenAlertDialogAsync($"{OtCerradas} Ot's Cerradas", "Completo");
+
+        }
+        catch (ExceptionResponse exres)
+        {
+            note.NotifyResponse(exres);
+        }
+        catch (NullReferenceException nullex)
+        {
+            note.NotifyNull(nullex);
+        }
+        loading.Close();
+        await Update();
+        await OrdenesGrid.Reload();
+
+
+    }
+
     private async Task Update()
     {
-        await OTRepo.UpdateOrdenes(0, "NO_CERRADAS", FechaDesde, FechaHasta);
+        try
+        {
+            loading.Show("Buscando OT's");
+            await OTRepo.UpdateOrdenes(0, "DEFINITIVA", FechaDesde, FechaHasta);
+        }
+        catch (ExceptionResponse exres)
+        {
+            note.NotifyResponse(exres);
+        }
+        catch (NullReferenceException nullex)
+        {
+            note.NotifyNull(nullex);
+        }
+        loading.Close();
     }
 
     private async Task InsertRow()
@@ -108,7 +179,22 @@
     private void OnCreateRow(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
     {
         if (ordenTrabajo.Movil != null)
-            OTRepo.CreateOrden(int.Parse(ordenTrabajo.Movil));
+        {
+            try
+            {
+                loading.Show("Creando OT...");
+                OTRepo.CreateOrden(int.Parse(ordenTrabajo.Movil));
+            }
+            catch (ExceptionResponse exres)
+            {
+                note.NotifyResponse(exres);
+            }
+            catch (NullReferenceException nullex)
+            {
+                note.NotifyNull(nullex);
+            }
+            loading.Close();
+        }
     }
 
     private void CancelEdit(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
@@ -126,21 +212,30 @@
         {
             ordenToInsert = null;
         }
-        if (await OTRepo.CloseOrden(ordenTrabajo))
+        try
         {
-            //OrdenesGrid.CancelEditRow(ordenTrabajo);
-            await OrdenesGrid.Reload();
-        }
-        else
-            //Agregar Notificacion si no cierra
-            Notification.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Duration = 4000,
-                    Summary = "No Cerrada",
-                    Detail = "La OT no se cerró."
-                });
+            loading.Show($"Cerrando {ordenTrabajo.Numero}");
+            if (await OTRepo.CloseOrden(ordenTrabajo))
+            {
+                //OrdenesGrid.CancelEditRow(ordenTrabajo);
+                note.NotifyOtCerrada(ordenTrabajo);
 
+                await OrdenesGrid.Reload();
+            }
+            else
+                //Agregar Notificacion si no cierra
+                note.NotifyOtNoCerrada(ordenTrabajo);
+        }
+        catch (ExceptionResponse exres)
+        {
+            note.NotifyResponse(exres);
+        }
+        catch (NullReferenceException nullex)
+        {
+            note.NotifyNull(nullex);
+        }
+
+        loading.Close();
         await OrdenesGrid.Reload();
 
 
@@ -151,5 +246,11 @@
         ordenToInsert = null;
     }
 
-
+    private async Task Exportar()
+    {
+        Services.Export export = new Services.Export();
+        var response = await export.ToExcel("Titulo",OTRepo.Ordenes.Where(ot => ot.Repartos == 0).ToList());
+        string fileName = "Ordenes.xlsx";
+        await Js.InvokeAsync<object>("saveAsFile", fileName, Convert.ToBase64String(response));
+    }
 }

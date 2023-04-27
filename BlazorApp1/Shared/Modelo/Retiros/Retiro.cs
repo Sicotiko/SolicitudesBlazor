@@ -30,7 +30,8 @@ namespace BlazorApp1.Shared.Modelo.Retiros
         public string TipoRetiro { get; set; }
         public string SubTipoRetiro { get; set; }
         public bool Asignar { get; set; }
-        public List<Tracking> TrackingList { get; set; }
+        public List<Tracking> TrackingList { get; set; } = new List<Tracking>();
+        public List<Incidencia> Incidencias { get; set; } = new List<Incidencia>();
         public Retiro() { }
 
         //public async Task GetTrackingList()

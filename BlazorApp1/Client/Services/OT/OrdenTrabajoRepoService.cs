@@ -4,6 +4,7 @@ using BlazorApp1.Shared.Modelo.OT;
 using BlazorApp1.Shared.User;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -41,7 +42,12 @@ namespace BlazorApp1.Client.Services.OT
             OrdenToClose ordenToClose = new OrdenToClose(ordenTrabajo, _usuario);
             var response = await _httpClient.PostAsJsonAsync($"OrdenTrabajo/Cerrar", ordenToClose);
             if (response.IsSuccessStatusCode)
+            {
+                //var ot = Ordenes.FirstOrDefault(ot => ot == ordenTrabajo);
+                //if (ot != null)
+                //    Ordenes.Remove(ot);
                 return await response.Content.ReadFromJsonAsync<bool>();
+            }
             else
                 throw new ExceptionResponse(await response.Content.ReadAsStringAsync());
         }

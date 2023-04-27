@@ -63,6 +63,25 @@ namespace BlazorApp1.Client.Services.Retiros
             return resultado;
 
         }
+
+        public async Task<IEnumerable<Retiro>> GetRetirosFallidos(string CodigoComuna, DateTime Desde, DateTime Hasta, string CodCliente)
+        {
+            IEnumerable<Retiro> resultado = new List<Retiro>();
+
+            _usuario.GetCredentials();
+
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"Retiros/GetFallidos/TODOS/{CodigoComuna}/NOEF/{Desde.Day:00}/{Desde.Month:00}/{Desde.Year}/{Hasta.Day:00}/{Hasta.Month:00}/{Hasta.Year}/{CodCliente}", _usuario);
+            if (response.IsSuccessStatusCode)
+                resultado = await response.Content.ReadFromJsonAsync<IEnumerable<Retiro>>();
+            else
+                throw new ExceptionResponse(await response.Content.ReadAsStringAsync());
+
+
+
+            return resultado;
+
+        }
+
         //Reporte Sucursales
         public async Task<IEnumerable<Retiro>> GetReporteSucursalesAsync(DateTime FechaReporte)
         {
@@ -145,13 +164,15 @@ namespace BlazorApp1.Client.Services.Retiros
                                                                                                         {
                                                                                                             "RetirosHistorial",RetirosHistorial
                                                                                                         }
-                                                                                                    },new DialogOptions()
-                                                                                                        {
-                                                                                                            Style = "min-height:auto;min-width:auto;width:auto",
-                                                                                                            CloseDialogOnEsc = true,
-                                                                                                            CloseDialogOnOverlayClick = true
-                                                                                                        }
+                                                                                                    }, new DialogOptions()
+                                                                                                    {
+                                                                                                        Style = "min-height:auto;min-width:auto;width:auto",
+                                                                                                        CloseDialogOnEsc = true,
+                                                                                                        CloseDialogOnOverlayClick = true
+                                                                                                    }
                                                                                                         );
         }
+
+
     }
 }

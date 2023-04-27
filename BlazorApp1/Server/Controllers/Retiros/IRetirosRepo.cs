@@ -14,5 +14,6 @@ namespace BlazorApp1.Server.Controllers.Retiros
         Task<Retiro> GetDetalleAsync(int CodigoRetiro, IUsuario usuario);
         Task<IEnumerable<Retiro>> GetReporteSucursalesAsync(DateTime FechaSolicitud, IUsuario usuario);
         Task AsignarRetiroAsync(Retiro retiro, IUsuario usuario);
+        Task<IEnumerable<Incidencia>> GetIncidencias(Retiro retiro, IUsuario usuario);
     }
 }

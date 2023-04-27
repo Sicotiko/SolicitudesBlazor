@@ -1,5 +1,5 @@
 ﻿@page "/"
-
+@inject MovilesService Movilesrepo
 <RadzenCard>
     <RadzenText TextStyle="TextStyle.DisplayH3" Text="Hola Radios!"/>
 </RadzenCard>
@@ -18,3 +18,14 @@
 
 @*<RetirosDataGridWithFilter />*@
 @*<SurveyPrompt Title="How is Blazor working for you?" />*@
+
+@*<RadzenButton Text="ClickMEEE!" Click="@OnClick"/>*@
+
+@code{
+    private async Task OnClick()
+    {
+        var list = await Movilesrepo.GetMovilesDisponibles();
+        foreach (var obj in list)
+            Console.WriteLine($"Codigo: {obj.Codigo} /n Nombre: {obj.Nombre} /n Tipo: {obj.Tipo}");
+    }
+}

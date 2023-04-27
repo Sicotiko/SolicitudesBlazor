@@ -1,16 +1,29 @@
 ﻿@page "/SucursalReport"
-@using BlazorApp1.Shared.Excepciones
 @using BlazorApp1.Shared.User
+@using BlazorApp1.Shared.ViewModel
+@using BlazorApp1.Shared.Excepciones;
+@inject ListadoTipoMovil listadoMovilesDisponibles
+@inject MovilesService MovilesRepo
+@inject NotificationService NotifyRepo
 @inject NavigationManager navigation
 @inject Usuario user
 
 <ReporteSucursal />
 @code {
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         try
         {
             user.GetCredentials();
+
+            try
+            {
+                listadoMovilesDisponibles.TipoMoviles = await MovilesRepo.GetMovilesDisponibles();
+            }
+            catch (ExceptionResponse exRes)
+            {
+                this.NotifyRepo.Notify(NotificationSeverity.Error, "Error!", exRes.Message);
+            }
         }
         catch
         {

@@ -1,10 +1,12 @@
 using BlazorApp1.Client.Components.Loading;
 using BlazorApp1.Client.Services;
 using BlazorApp1.Client.Services.Dialogs;
+using BlazorApp1.Client.Services.Moviles;
 using BlazorApp1.Client.Services.Notifications;
 using BlazorApp1.Client.Services.OT;
 using BlazorApp1.Client.Services.Retiros;
 using BlazorApp1.Shared.User;
+using BlazorApp1.Shared.ViewModel;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,8 @@ namespace BlazorApp1.Client
             builder.Services.AddScoped<IOrdenTrabajoRepoService, OrdenTrabajoRepoService>();
             //builder.Services.AddScoped<IUsuario, Usuario>();
             builder.Services.AddScoped<Usuario>();
+            builder.Services.AddScoped<ListadoTipoMovil>();
+            builder.Services.AddScoped<MovilesService>();
 
             //DEBUG
             //builder.Services.AddScoped<PruebasServices>();

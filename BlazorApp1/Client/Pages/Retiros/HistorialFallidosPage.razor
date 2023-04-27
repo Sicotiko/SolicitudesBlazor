@@ -1,4 +1,4 @@
-﻿@page "/Asignacion"
+﻿@page "/Fallidos"
 @using BlazorApp1.Shared.Excepciones;
 @using BlazorApp1.Shared.User
 @using BlazorApp1.Shared.ViewModel
@@ -9,7 +9,8 @@
 @inject MovilesService MovilesRepo
 @inject NotificationService NotifyRepo
 
-<Asignacion />
+<HistorialFallidos />
+
 @code {
     protected override async Task OnInitializedAsync()
     {
@@ -30,4 +31,5 @@
             navigation.NavigateTo("/Configuracion");
         }
     }
+
 }

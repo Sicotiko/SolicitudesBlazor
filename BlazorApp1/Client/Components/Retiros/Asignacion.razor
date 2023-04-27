@@ -5,17 +5,19 @@
 @using BlazorApp1.Shared.Modelo.Retiros
 @using BlazorApp1.Shared.Utilities
 @using System.Timers
+@using BlazorApp1.Shared.ViewModel
 @inject IRetirosRepoService RetirosRepo
 @inject IOrdenTrabajoRepoService OrdenesRepo
 @inject INoteService Note
 @inject IDialogFrameService dialog
 @inject LoadingScreen LoadScreen
+@inject ListadoTipoMovil ListadoMovilesDisponibles
+@inject NotificationService NotificationRepo
 
 
 <RadzenCard>
     <RadzenText TextStyle="TextStyle.DisplayH2" Text="Asignacion de retiros por sector:" />
 </RadzenCard>
-
 
 <div class="container-fluid">
     <div class="row px-3">
@@ -67,7 +69,8 @@
     </div>
 </div>
 @*<RadzenCard>*@
-<RadzenText Text="Retiros A Asignar" />
+<RadzenText Text=@($"Retiros a Asignar ({RetirosActual.Count()}) Retiros Pendientes") />
+
 <RadzenDataGrid TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                 Data="RetirosActual"
                 @ref="gridActual"
@@ -77,11 +80,12 @@
                 AllowSorting="true"
                 AllowFiltering="true"
                 FilterMode="FilterMode.Simple"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                LogicalFilterOperator="LogicalFilterOperator.And"
                 IsLoading="GridLoading"
-                AllowColumnResize="true"
-                ColumnWidth="50px">
+                AllowColumnResize="true">
     <EmptyTemplate>
-        <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">No hay retiros pendientes.</p>
+        <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">Sin retiros segun parametros.</p>
     </EmptyTemplate>
     <Columns>
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
@@ -120,6 +124,26 @@
                               Title="Comuna"
                               Width="100px" />
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Title="Horario"
+                              Width="70px">
+            <Template Context="data">
+                @((data as BlazorApp1.Shared.Modelo.Retiros.Retiro).AmDesde.ToShortTimeString()) - @((data as BlazorApp1.Shared.Modelo.Retiros.Retiro).AmHasta.ToShortTimeString()) <br />
+                @((data as BlazorApp1.Shared.Modelo.Retiros.Retiro).PmDesde.ToShortTimeString()) - @((data as BlazorApp1.Shared.Modelo.Retiros.Retiro).PmHasta.ToShortTimeString())
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Bultos"
+                              Title="Bultos"
+                              Width="100px" />
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                              Property="Kilos"
+                              Title="Kilos"
+                              Width="100px">
+            <Template Context="data">
+                @((data as BlazorApp1.Shared.Modelo.Retiros.Retiro).Kilos) (Kg)
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Movil"
                               Title="Movil"
                               Width="85px">
@@ -134,7 +158,7 @@
 
 
 @code {
-    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosActual;
+    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosActual = new List<Retiro>();
     SectorName sectorName;
     RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridActual;
     bool GridLoading, autoActualizacion = false;
@@ -185,10 +209,11 @@
         if (FiveMinutesToRefresh.Hour == 0 &&
             FiveMinutesToRefresh.Minute == 0 &&
             FiveMinutesToRefresh.Second == 0)
-            {
-                ResetTimer();
-                await PoblarRetirosOrigen();
-            }
+        {
+            ResetTimer();
+            await AsignacionAsync();
+            await PoblarRetirosOrigen();
+        }
     }
     private bool ValidateTimerTime()
     {
@@ -218,67 +243,6 @@
         return TimeToRespawn.Value.Hour == 0;
     }
 
-    //private void EstablecerTiempoContadorInicial()
-    //{
-    //    FiveMinutesToRefresh = DateTime.ParseExact("00:15", "mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-    //}
-
-    //private void ChangeAutoActualizacion(bool value)
-    //{
-    //    if (value)
-    //        if (TimeToRespawn != null)
-    //            if (TimeToRespawn.Value.Hour == 0 &&
-    //               TimeToRespawn.Value.Minute == 0 &&
-    //                TimeToRespawn.Value.Second < 15)
-    //                Note.NotifyTime("Tiempo Invalido!", "Selecciona un tiempo mayor a 15 Segundos ");
-    //            else
-    //                ActivateTimers();
-    //        else
-    //        {
-    //            autoActualizacion = false;
-    //            Note.NotifyTime("Tiempo Invalido!", "Selecciona un tiempo valido.");
-    //        }
-    //    else
-    //        DeActivateTimers();
-    //}
-
-    //private void ActivateTimers()
-    //{
-    //    autoActualizacion = true;
-    //    //ActivateTimerAutoRefresh();
-    //    ActivateTimerTickSecond();
-    //}
-    //private void DeActivateTimers()
-    //{
-    //    autoActualizacion = false;
-    //    timerTickSecond.Enabled = autoActualizacion;
-    //    //timerAutoRefresh.Enabled = autoActualizacion;
-    //}
-
-    //private void ActivateTimerTickSecond()
-    //{
-    //    timerTickSecond.Interval = 1000;
-    //    timerTickSecond.Elapsed += TickElapsed;
-    //    timerTickSecond.Enabled = autoActualizacion;
-    //    FiveMinutesToRefresh = (DateTime)TimeToRespawn;
-    //    //EstablecerTiempoContadorInicial();
-    //}
-    //private async void TickElapsed(object? sender, ElapsedEventArgs e)
-    //{
-    //    FiveMinutesToRefresh = FiveMinutesToRefresh.AddSeconds(-1);
-    //    //Console.WriteLine(FiveMinutesToRefresh);
-
-    //    await InvokeAsync(() =>
-    //    {
-    //        StateHasChanged();
-    //    });
-    //    if (FiveMinutesToRefresh.Minute == 0 && FiveMinutesToRefresh.Second == 0)
-    //    {
-    //        await PoblarRetirosOrigen();
-    //        FiveMinutesToRefresh = (DateTime)TimeToRespawn;
-    //    }
-
-    //}
 
     private async void BtnActualizarClick()
     {
@@ -287,15 +251,25 @@
     }
     private async Task PoblarRetirosOrigen()
     {
-        RetirosActual = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
-        var comunas = Comunas.GetComunasPorSector(sectorName);
-
-        foreach (var comuna in comunas)
+        try
         {
-            LoadScreen.Show($"Buscando en {comuna.Key}");
-            var newList = await RetirosRepo.GetRetirosPendientes("TODOS", comuna.Value, DateTime.Today, DateTime.Today);
-            RetirosActual.AddRange(newList);
-            await gridActual.Reload();
+
+            RetirosActual = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
+            var comunas = Comunas.GetComunasPorSector(sectorName);
+
+            foreach (var comuna in comunas)
+            {
+                LoadScreen.Show($"Buscando en {comuna.Key}");
+                var newList = await RetirosRepo.GetRetirosPendientes("TODOS", comuna.Value, DateTime.Today, DateTime.Today);
+                newList.ToList().ForEach(ret => ret.Movil = string.Empty);
+                //newList.ToList().ForEach(ret => ret.Asignar = false);
+                RetirosActual.AddRange(newList);
+                await gridActual.Reload();
+                LoadScreen.Close();
+            }
+        }catch(ExceptionResponse exRes)
+        {
+            NotificationRepo.Notify(NotificationSeverity.Error,"Error!",exRes.Message);
             LoadScreen.Close();
         }
 
@@ -328,14 +302,28 @@
     {
 
         LoadScreen.Show("Asignando...");
-        asignados = 0;
-        foreach (var retiro in RetirosActual.Where(r => r.Asignar == true &&
-                                                        r.Movil != ""))
+        try
         {
-            await ObtenerOrdenTrabajo(retiro);
+            asignados = 0;
+            foreach (var retiro in RetirosActual.Where(r => r.Asignar == true &&
+                                                            r.Movil != ""))
+            {
+                if (ListadoMovilesDisponibles.TipoMoviles.FirstOrDefault(tp => tp.Codigo.Contains(retiro.Movil)) == null)
+                {
+                    NotificationRepo.Notify(NotificationSeverity.Error, "MOVIL NO DISPONIBLE", $"El movil {retiro.Movil} no esta disponible en alertran", 15000);
+                    continue;
+                }
 
-            await RetirosRepo.AsignarAsync(retiro);
-            asignados++;
+                await ObtenerOrdenTrabajo(retiro);
+
+                await RetirosRepo.AsignarAsync(retiro);
+                asignados++;
+                RetirosActual.Remove(retiro);
+            }
+        }
+        catch
+        {
+            throw;
         }
         LoadScreen.Close();
         ConfirmFinishedWork();
@@ -351,8 +339,8 @@
             {
                 try
                 {
+                    ResetTimer();
                     await AsignacionAsync();
-
                 }
                 catch (ExceptionResponse ex)
                 {
@@ -367,6 +355,8 @@
                     Note.NotifyNull(nullEx);
                 }
             }
+
+        await gridActual.Reload();
 
     }
 

@@ -9,5 +9,7 @@ namespace BlazorApp1.Client.Services.Notifications
         public void NotifyNull(NullReferenceException nullReferenceException);
         public void NotifyVoidData();
         public void NotifyTime();
+        public void NotifyOtNoCerrada(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo);
+        public void NotifyOtCerrada(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo);
     }
 }

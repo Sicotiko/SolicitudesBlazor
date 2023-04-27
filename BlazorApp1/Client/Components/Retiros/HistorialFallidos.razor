@@ -1,0 +1,170 @@
+﻿@using BlazorApp1.Client.Services.Notifications
+@using BlazorApp1.Shared.Excepciones
+@using BlazorApp1.Shared.Modelo.Comunas
+@using BlazorApp1.Shared.Utilities
+@inject IRetirosRepoService RetirosRepo
+@inject INoteService Note
+@inject LoadingScreen LoadScreen
+@inject IRetirosRepoService RetirosRepo
+@inject NotificationService NotifyRepo
+
+
+<div class="row">
+    <div class="col">
+        <RadzenCard>
+            <RadzenDropDown Data="@(Enum.GetValues(typeof(SectorName)).Cast<Enum>())"
+                            @bind-Value="sectorName" />
+        </RadzenCard>
+    </div>
+    <div class="col">
+        <RadzenCard>
+            <RadzenSwitch @bind-Value="@MultipleFecha" />
+            <RadzenText TextStyle="TextStyle.DisplayH4"
+                        Text="Seleccionar un Rango de Fechas?" />
+        </RadzenCard>
+    </div>
+
+    <div class="col">
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.DisplayH4"
+                        Text="@(TextToFecha())" />
+            <RadzenDatePicker @bind-Value="@FechaDesde"
+                              ShowTime="false"
+                              DateFormat="d" />
+            @if (MultipleFecha)
+            {
+                <RadzenText TextStyle="TextStyle.DisplayH4"
+                        Text="Hasta:" />
+                <RadzenDatePicker @bind-Value="@FechaHasta"
+                              ShowTime="false"
+                              DateFormat="d" />
+            }
+        </RadzenCard>
+    </div>
+
+    <div class="col">
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.DisplayH4"
+                        Text="Cod. Cliente" />
+            <RadzenTextBox @bind-Value="@CodCliente"
+                           Placeholder="En blanco los buscara todos." />
+        </RadzenCard>
+    </div>
+
+    <div class="col">
+        <RadzenCard>
+            <RadzenButton Text="Buscar"
+                          Click="@GetRetirosAsync"
+                          Icon="search" />
+
+        </RadzenCard>
+    </div>
+</div>
+
+<RadzenCard>
+    <RadzenDataGrid TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                    Data="@Retiros"
+                    @ref="@gridFallidos"
+                    AllowAlternatingRows="true"
+                    AllowColumnReorder="false"
+                    AllowFiltering="true"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    AllowColumnResize="true"
+                    AllowSorting="true"
+                    FilterMode="FilterMode.Simple">
+        <EmptyTemplate>
+            <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">Sin retiros fallidos con los parametros seleccionados.</p>
+        </EmptyTemplate>
+        <Columns>
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                                  Property="CodigoRetiro"
+                                  Title="N°"
+                                  Resizable="true"
+                                  Width="100 px" />
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                                  Property="Nombre"
+                                  Title="Nombre"
+                                  Resizable="true"
+                                  Width="150 px" />
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                                  Property="CodigoCliente"
+                                  Title="Cliente"
+                                  Resizable="true"
+                                  Width="100 px" />
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                                  Property="Direccion"
+                                  Title="Direccion"
+                                  Resizable="true"
+                                  Width="170 px" />
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                                  Property="Comuna"
+                                  Title="Comuna"
+                                  Resizable="true"
+                                  Width="120 px" />
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                                  Title="Codigo Incidencia"
+                                  Resizable="true"
+                                  SortProperty="Incidencias[0].Codigo"
+                                  Width="90 px">
+                <Template Context="data">
+                    @((data as BlazorApp1.Shared.Modelo.Retiros.Retiro).Incidencias.First().Codigo)
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                                  Title="Descripcion Incidencia"
+                                  Resizable="true"
+                                  Width="120 px">
+                <Template Context="data">
+                    @((data as BlazorApp1.Shared.Modelo.Retiros.Retiro).Incidencias.First().Descripcion)
+                </Template>
+            </RadzenDataGridColumn>
+
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+
+@code {
+    private List<BlazorApp1.Shared.Modelo.Retiros.Retiro> Retiros = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
+    private bool MultipleFecha = false;
+    private DateTime FechaDesde = DateTime.Today.AddDays(-1);
+    private DateTime FechaHasta = DateTime.Today.AddDays(-1);
+    private string CodCliente = string.Empty;
+    private SectorName sectorName;
+    private RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridFallidos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+    }
+
+    private async Task GetRetirosAsync()
+    {
+        FechaHasta = MultipleFecha ? FechaHasta : FechaDesde;
+        CodCliente = CodCliente == string.Empty ? "TODOS" : CodCliente;
+        try
+        {
+            Dictionary<string, string> comunas = Comunas.GetComunasPorSector(sectorName);
+            foreach (KeyValuePair<string, string> comuna in comunas)
+            {
+                LoadScreen.Show($"Buscando en {comuna.Key}");
+
+                this.Retiros.AddRange(await RetirosRepo.GetRetirosFallidos(comuna.Value, FechaDesde, FechaHasta, CodCliente));
+                await gridFallidos.Reload();
+                LoadScreen.Close();
+            }
+        }
+        catch (ExceptionResponse exRes)
+        {
+            this.NotifyRepo.Notify(NotificationSeverity.Error, "Error!", exRes.Message);
+        }
+
+    }
+
+    private void Debug()
+    {
+        
+    }
+    private string TextToFecha() => MultipleFecha ? "Desde:" : "Seleccione Fecha:";
+}

@@ -172,7 +172,7 @@ namespace BlazorApp1.Server.Management.Retiros
                 _PaginaActual++;
             } while (_PaginaActual <= _PaginaMaxima);
 
-        }
+        }       
 
         public static async Task<Retiro> GetDetalleAsync(int CodigoRetiro, IUsuario usuario)
         {

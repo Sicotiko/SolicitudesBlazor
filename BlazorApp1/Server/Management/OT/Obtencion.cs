@@ -115,11 +115,11 @@ namespace BlazorApp1.Server.Management.OT
                     PaginaActual++;
                 } while (PaginaActual <= PaginaMaxima);
             }
-            catch (Exception ex)
+            catch
             {
-                if (DetalleListaOtNode is not null)
-                    Console.WriteLine(Nodos.GetNode(DetalleListaOtNode[0], "a").InnerHtml);
-
+                //if (DetalleListaOtNode is not null)
+                //    Console.WriteLine(Nodos.GetNode(DetalleListaOtNode[0], "a").InnerHtml);
+                throw;
             }
             return ordenTrabajos;
         }

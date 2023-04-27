@@ -4,11 +4,14 @@
 @using BlazorApp1.Shared.Modelo.Comunas
 @using BlazorApp1.Shared.Modelo.Retiros
 @using BlazorApp1.Shared.Utilities
+@using BlazorApp1.Shared.ViewModel
 @inject IRetirosRepoService RetirosRepo
 @inject IOrdenTrabajoRepoService OrdenesRepo
 @inject INoteService Note
 @inject IDialogFrameService dialog
 @inject LoadingScreen LoadScreen
+@inject ListadoTipoMovil ListadoMovilesDisponibles
+@inject NotificationService NotificationRepo
 
 
 <RadzenCard>
@@ -46,7 +49,7 @@
     </div>
 </div>
 @*<RadzenCard>*@
-<RadzenText Text="Retiros A Asignar" />
+<RadzenText Text=@($"Retiros a Asignar ({RetirosActual.Count()}) Retiros Pendientes") />
 <RadzenDataGrid TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                 Data="RetirosActual"
                 @ref="gridActual"
@@ -59,7 +62,7 @@
                 IsLoading="GridLoading"
                 AllowColumnResize="true">
     <EmptyTemplate>
-        <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">No hay retiros fijos pendientes.</p>
+        <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">Sin retiros segun parametros .</p>
     </EmptyTemplate>
     <Columns>
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
@@ -112,8 +115,8 @@
 @*</RadzenCard>*@
 
 @code {
-    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosOrigen;
-    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosActual;
+    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosOrigen = new List<Retiro>();
+    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosActual = new List<Retiro>();
     SectorName sectorName;
     DateTime FechaOrigen = DateTime.Now;
     DateTime FechaActual = DateTime.Now;
@@ -276,6 +279,7 @@
         });
         //await BusyDialog();
 
+        await gridActual.Reload();
         GridLoading = false;
     }
     private async Task Asignacion()
@@ -291,11 +295,18 @@
             {
                 if (retiro.Movil == "")
                     continue;
+                if (ListadoMovilesDisponibles.TipoMoviles.FirstOrDefault(tp => tp.Codigo.Contains(retiro.Movil)) == null)
+                {
+                    NotificationRepo.Notify(NotificationSeverity.Error,"MOVIL NO DISPONIBLE",$"El movil {retiro.Movil} no esta disponible en alertran",15000);
+                    continue;
+                }
                 try
                 {
                     await ObtenerOrdenTrabajo(retiro);
 
                     await RetirosRepo.AsignarAsync(retiro);
+
+                    this.RetirosActual.Remove(retiro);
                 }catch(ExceptionResponse exres)
                 {
                     Note.NotifyResponse(exres);

@@ -34,9 +34,11 @@
             <RadzenSidebar @bind-Expanded="@collapseNavMenu" class="rz-color-white rz-background-color-primary-darker">
                 <RadzenPanelMenu class=" rz-color-white rz-background-color-primary-darker" Style="@fontStyle">
                     <RadzenPanelMenuItem Text="Inicio" Icon="home" Path="/" />
-                    <RadzenPanelMenuItem Text="Asignación" Icon="home" Path="Asignacion" Visible=@(usuario.PaswordInBase64 != null) />
+                    <RadzenPanelMenuItem Text="Asignación" Icon="assignment_add" Path="Asignacion" Visible=@(usuario.PaswordInBase64 != null) />
                     <RadzenPanelMenuItem Text="Bot Asignación" Icon="smart_toy" Path="AsignacionBot" Visible=@(usuario.PaswordInBase64 != null) />
                     <RadzenPanelMenuItem Text="Reporte Sucursal" Icon="summarize" Path="SucursalReport" Visible=@(usuario.PaswordInBase64 != null)/>
+                    <RadzenPanelMenuItem Text="Ordenes Trabajo" Icon="order_play" Path="Ordenes" Visible=@(usuario.PaswordInBase64 != null) />
+                    <RadzenPanelMenuItem Text="Historial Fallidos" Icon="timeline" Path="Fallidos" Visible=@(usuario.PaswordInBase64 != null) />
                     <RadzenPanelMenuItem Text="Configuracion" Icon="settings" Path="Configuracion"/>
                 </RadzenPanelMenu>
 
@@ -52,4 +54,5 @@
 @code {
     private bool collapseNavMenu = false;
     private string fontStyle = @"font-weight:800;font-size:1.2rem";
+    //private static bool VisibleOrNot = usuario.PaswordInBase64 != null;
 }

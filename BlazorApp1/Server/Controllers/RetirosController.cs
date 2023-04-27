@@ -9,6 +9,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace BlazorApp1.Server.Controllers
 {
@@ -75,6 +76,43 @@ namespace BlazorApp1.Server.Controllers
 
             return actionResult;
         }
+        [HttpPost("GetFallidos/{TipoEntrada}/{Comuna}/{EstadoRetiro}/{diaDesde}/{mesDesde}/{anioDesde}/{diaHasta}/{mesHasta}/{anioHasta}/{CodCliente}")]
+        public async Task<IActionResult> GetRetirosFallidos(string TipoEntrada, string Comuna, string EstadoRetiro,
+                                                            string diaDesde, string mesDesde, string anioDesde,
+                                                            string diaHasta, string mesHasta, string anioHasta,
+                                                            string CodCliente,
+                                                            [FromBody] Usuario usuario)
+        {
+            IActionResult actionResult = BadRequest();
+
+            try
+            {
+                DateTime FechaDesde = DateTime.Parse($"{diaDesde}/{mesDesde}/{anioDesde}");
+                DateTime FechaHasta = DateTime.Parse($"{diaHasta}/{mesHasta}/{anioHasta}");
+                
+                TipoEntrada = TipoEntrada == "TODOS" ? "" : TipoEntrada;
+                CodCliente = CodCliente == "TODOS" ? "" : CodCliente;
+                EstadoRetiro = EstadoRetiro == "TODOS" ? "" : EstadoRetiro;
+                
+
+                IEnumerable<Retiro> listadoRetiros = await _retirosRepo.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario, EstadoRetiro,Cliente: CodCliente);
+                listadoRetiros.ToList().ForEach(async ret => await _retirosRepo.GetIncidencias(ret,usuario));
+
+                actionResult = Ok(listadoRetiros);
+            }
+            catch (ConnectionException ConnEx)
+            {
+                actionResult = StatusCode(502, ConnEx.Message); //badGateway
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = Unauthorized(CredEx.Message);
+            }
+
+            return actionResult;
+        }
+
+
         [HttpPost("GetRetirosByMovil/{TipoEntrada}/{Movil}/{EstadoRetiro}/{diaDesde}/{mesDesde}/{anioDesde}/{diaHasta}/{mesHasta}/{anioHasta}")]
         public async Task<IActionResult> GetRetirosByMovil(string TipoEntrada, string EstadoRetiro,
                                                            string diaDesde, string mesDesde, string anioDesde,

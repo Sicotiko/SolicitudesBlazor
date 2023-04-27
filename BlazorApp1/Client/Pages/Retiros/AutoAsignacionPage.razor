@@ -1,21 +1,21 @@
-﻿@page "/Asignacion"
-@using BlazorApp1.Shared.Excepciones;
+﻿@page "/AsignacionBot"
 @using BlazorApp1.Shared.User
 @using BlazorApp1.Shared.ViewModel
-
-@inject NavigationManager navigation
-@inject Usuario user
+@using BlazorApp1.Shared.Excepciones;
 @inject ListadoTipoMovil listadoMovilesDisponibles
 @inject MovilesService MovilesRepo
 @inject NotificationService NotifyRepo
+@inject NavigationManager navigation
+@inject Usuario user
 
-<Asignacion />
+<AutoAsignacion />
 @code {
     protected override async Task OnInitializedAsync()
     {
         try
         {
             user.GetCredentials();
+
             try
             {
                 listadoMovilesDisponibles.TipoMoviles = await MovilesRepo.GetMovilesDisponibles();
@@ -29,5 +29,7 @@
         {
             navigation.NavigateTo("/Configuracion");
         }
+
     }
+
 }

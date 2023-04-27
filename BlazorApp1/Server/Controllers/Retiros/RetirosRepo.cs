@@ -18,6 +18,11 @@ namespace BlazorApp1.Server.Controllers.Retiros
             return await Management.Retiros.Obtencion.GetDetalleAsync(CodigoRetiro, usuario);
         }
 
+        public async Task<IEnumerable<Incidencia>> GetIncidencias(Retiro retiro, IUsuario usuario)
+        {
+            return await Management.Trackings.Obtencion.GetIncidencias(retiro, usuario);
+        }
+
         public async Task<IEnumerable<Retiro>> GetReporteSucursalesAsync(DateTime FechaSolicitud, IUsuario usuario)
         {
             return await Management.Retiros.Obtencion.GetReporteSucursalesAsync(FechaSolicitud, usuario);
@@ -30,5 +35,6 @@ namespace BlazorApp1.Server.Controllers.Retiros
                 mobileNumber = int.Parse(Movil);
             return await Management.Retiros.Obtencion.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario, EstadoRetiro, Movil: mobileNumber, CodCliente: Cliente);
         }
+
     }
 }

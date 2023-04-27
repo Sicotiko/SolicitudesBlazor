@@ -26,6 +26,16 @@
                                   Property="Comuna"
                                   Title="Comuna" />
             <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Bultos"
+                                  Title="Bultos" />
+            <RadzenDataGridColumn TItem="Retiro"
+                                  Property="Kilos"
+                                  Title="Kilos">
+                <Template Context="data">
+                    @((data as Retiro).Kilos) (Kg)
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Retiro"
                                   Property="Movil"
                                   Title="Movil" />
         </Columns>
@@ -34,11 +44,11 @@
 @code {
     [Parameter]
     public IEnumerable<Retiro> RetirosHistorial { get; set; }
-    
+
     private RadzenDataGrid<Retiro> RetirosGrid;
     private bool isLoading = false;
 
 
 
-   
+
 }

@@ -13,6 +13,7 @@ namespace BlazorApp1.Client.Services.Retiros
         Task<IEnumerable<Retiro>> GetRetirosHistorialCliente(string CodigoCliente, DateTime Desde, DateTime Hasta);
         Task<IEnumerable<Retiro>> GetRetirosHistorialCliente(string CodigoCliente,string CodigoComuna, DateTime Desde, DateTime Hasta);
         Task<IEnumerable<Retiro>> GetRetirosAsignados(string TipoRetiro, string Movil, DateTime Desde, DateTime Hasta);
+        Task<IEnumerable<Retiro>> GetRetirosFallidos(string CodigoComuna, DateTime Desde, DateTime Hasta, string CodCliente = "");
         Task<IEnumerable<Retiro>> GetReporteSucursalesAsync(DateTime FechaReporte);
         Task AsignarAsync(Retiro retiroToAssign);
         Task HistorialClienteInDialog(Retiro retiro);
