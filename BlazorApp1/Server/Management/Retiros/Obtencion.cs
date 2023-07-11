@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic;
 
 namespace BlazorApp1.Server.Management.Retiros
 {
@@ -58,7 +59,7 @@ namespace BlazorApp1.Server.Management.Retiros
         }
 
         public static async Task<List<Retiro>> GetRetirosAsync(string TipoEntrada, string Comuna, DateTime FechaDesde,
-                                                       DateTime FechaHasta,IUsuario usuario, string EstadoRetiro = "",
+                                                       DateTime FechaHasta, IUsuario usuario, string EstadoRetiro = "",
                                                        int Movil = 0, string CodCliente = "", string Zona = "")
         {
             _Body = String.Empty;
@@ -172,14 +173,16 @@ namespace BlazorApp1.Server.Management.Retiros
                 _PaginaActual++;
             } while (_PaginaActual <= _PaginaMaxima);
 
-        }       
+        }
 
         public static async Task<Retiro> GetDetalleAsync(int CodigoRetiro, IUsuario usuario)
         {
             _Body = String.Empty;
             string url = $"recogidas_repartos/gen_recogidas_manual_form.do?codigo_rec={CodigoRetiro}&volver=&pendiente=&finalizada=null";
             string AmDesde;
+            string AmHasta;
             string PmDesde;
+            string PmHasta;
             Retiro retiro = new Retiro();
             HtmlAgilityPack.HtmlDocument document = new HtmlAgilityPack.HtmlDocument();
             HtmlAgilityPack.HtmlNode BodyNode;
@@ -207,30 +210,49 @@ namespace BlazorApp1.Server.Management.Retiros
                 retiro.Observacion = Nodos.GetNode(BodyNode, "input", "name", "observaciones").GetAttributeValue("value", "");
 
                 AmDesde = Nodos.GetNode(BodyNode, "input", "name", "horadesde").GetAttributeValue("value", "");
+                DateTime.TryParse(AmDesde, out DateTime resultAmDesde);
+                retiro.AmDesde = resultAmDesde;
+
+                AmHasta = Nodos.GetNode(BodyNode, "input", "name", "horahasta").GetAttributeValue("value", "");
+                DateTime.TryParse(AmHasta, out DateTime resultAmHasta);
+                retiro.AmHasta = resultAmHasta;
+
                 PmDesde = Nodos.GetNode(BodyNode, "input", "name", "horadesde1").GetAttributeValue("value", "");
+                DateTime.TryParse(PmDesde, out DateTime resultPmDesde);
+                retiro.PmDesde = resultPmDesde;
+
+                PmHasta = Nodos.GetNode(BodyNode, "input", "name", "horahasta1").GetAttributeValue("value", "");
+                DateTime.TryParse(PmHasta, out DateTime resultPmHasta);
+                retiro.PmHasta = resultPmHasta;
 
 
-                //Determinacion de Horario AM o PM
-                if (!AmDesde.Equals(""))
-                {
-                    string amHasta = Nodos.GetNode(BodyNode, "input", "name", "horahasta").GetAttributeValue("value", "");
-                    retiro.AmDesde = DateTime.Parse(AmDesde);
-                    retiro.AmHasta = DateTime.Parse(amHasta);
-                    if (DateTime.Parse(amHasta) <= DateTime.Parse("15:00"))
-                        retiro.TipoRetiro = "AM";
-                    else
-                        retiro.TipoRetiro = "PM";
-                }
-                if (!PmDesde.Equals(""))
-                {
-                    string pmHasta = Nodos.GetNode(BodyNode, "input", "name", "horahasta1").GetAttributeValue("value", "");
-                    retiro.PmDesde = DateTime.Parse(PmDesde);
-                    retiro.PmHasta = DateTime.Parse(pmHasta);
-                    if (DateTime.Parse(pmHasta) <= DateTime.Parse("15:00"))
-                        retiro.TipoRetiro = "AM";
-                    else
-                        retiro.TipoRetiro = "PM";
-                }
+                //Obtener Horario AM o PM
+                if (retiro.AmHasta > DateTime.Parse("15:00") || retiro.PmHasta > DateTime.Parse("15:00"))
+                    retiro.TipoRetiro = "PM";
+                else
+                    retiro.TipoRetiro = "AM";
+
+                ////Determinacion de Horario AM o PM
+                //if (!AmDesde.Equals(""))
+                //{
+                //    string amHasta = Nodos.GetNode(BodyNode, "input", "name", "horahasta").GetAttributeValue("value", "");
+                //    retiro.AmDesde = DateTime.Parse(AmDesde);
+                //    retiro.AmHasta = DateTime.TryParse(amHasta);
+                //    if (DateTime.Parse(amHasta) <= DateTime.Parse("15:00"))
+                //        retiro.TipoRetiro = "AM";
+                //    else
+                //        retiro.TipoRetiro = "PM";
+                //}
+                //if (!PmDesde.Equals(""))
+                //{
+                //    string pmHasta = Nodos.GetNode(BodyNode, "input", "name", "horahasta1").GetAttributeValue("value", "");
+                //    retiro.PmDesde = DateTime.Parse(PmDesde);
+                //    retiro.PmHasta = DateTime.Parse(pmHasta);
+                //    if (DateTime.Parse(pmHasta) <= DateTime.Parse("15:00"))
+                //        retiro.TipoRetiro = "AM";
+                //    else
+                //        retiro.TipoRetiro = "PM";
+                //}
 
 
                 //Obtener Tipo de Retiro
@@ -302,7 +324,7 @@ namespace BlazorApp1.Server.Management.Retiros
             }
             return Retiros;
         }
-        public static async IAsyncEnumerable<Retiro> GetReporteSucursalesAsyncYield(DateTime FechaSolicitud, IUsuario usuario )
+        public static async IAsyncEnumerable<Retiro> GetReporteSucursalesAsyncYield(DateTime FechaSolicitud, IUsuario usuario)
         {
             Dictionary<string, string> Sucursales = Shared.Utilities.Sucursales.GetSucursales();
             foreach (KeyValuePair<string, string> sucursal in Sucursales)
@@ -354,7 +376,7 @@ namespace BlazorApp1.Server.Management.Retiros
                 if (jsonList.Equals("No se encontraron registros"))
                     throw new Exception("No se encontraron registros");
                 var result = JsonConvert.DeserializeObject<List<MovilDetalle>>(jsonList);
-                if(result is not null)
+                if (result is not null)
                     ret = result.ToList();
             }
             catch
@@ -364,7 +386,7 @@ namespace BlazorApp1.Server.Management.Retiros
 
             return ret;
         }
-        
+
         public static async Task<List<Retiro>> GetTotalFromMCAsync(MovilDetalle movilDetalle, EstadoDetalleMc Estado, DateTime Fecha, IUsuario usuario)
         {
             List<Retiro> ret = new List<Retiro>();

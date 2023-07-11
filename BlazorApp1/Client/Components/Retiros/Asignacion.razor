@@ -318,7 +318,7 @@
 
                 await RetirosRepo.AsignarAsync(retiro);
                 asignados++;
-                RetirosActual.Remove(retiro);
+                //RetirosActual.Remove(retiro);
             }
         }
         catch
@@ -339,7 +339,7 @@
             {
                 try
                 {
-                    ResetTimer();
+                    //ResetTimer();
                     await AsignacionAsync();
                 }
                 catch (ExceptionResponse ex)

@@ -1,0 +1,54 @@
+﻿@page "/"
+@using BlazorApp1.Client.Services.Login;
+@layout LoginLayout
+@inject NavigationManager navManager;
+
+
+@inject LoginService loginService
+
+<div style="width:100vw;height:100vh;position:relative;">
+    <RadzenCard Style="max-width: 20vw;position: absolute;top: 50%;left: 50%;transform: translate(-50%,-50%);"
+                Variant="Variant.Flat">
+        <RadzenStack Orientation="Orientation.Vertical">
+            <RadzenIcon Icon="person"
+                        Style="border: solid 1px;border-radius: 53%;width: 150px;height: 150px;margin-top: -100px;margin-left: auto;margin-right: auto; font-size:120px;background-color: rgba(150,80,255,.6);" />
+            <RadzenTextBox @bind-Value="@login.UserInBase64"
+                           Placeholder="Nombre de Usuario" />
+
+            <div class="input-group mb-3">
+
+                <RadzenPassword @bind-Value="@login.PaswordInBase64"
+                                class="form-control"
+                                Visible="!VisiblePass"
+                                Placeholder="Contraseña" />
+                <RadzenTextBox @bind-Value="@login.PaswordInBase64"
+                               class="form-control"
+                               Visible="VisiblePass"
+                               Placeholder="Contraseña" />
+                <RadzenButton  Icon="@IconText()"
+                                Click="(() => VisiblePass = !VisiblePass)"/>
+            </div>
+
+            <RadzenButton Text="Login"
+                          Click="InicioSesion" />
+        </RadzenStack>
+
+
+
+
+
+    </RadzenCard>
+</div>
+@code {
+    private BlazorApp1.Shared.User.Usuario login = new BlazorApp1.Shared.User.Usuario();
+    private bool VisiblePass = false;
+    private string IconText() => VisiblePass ? "visibility" : "visibility_off";
+
+    private async Task InicioSesion()
+    {
+
+        if (await loginService.Login(login))
+            navManager.NavigateTo("/Index");
+
+    }
+}

@@ -1,6 +1,7 @@
 using BlazorApp1.Client.Components.Loading;
 using BlazorApp1.Client.Services;
 using BlazorApp1.Client.Services.Dialogs;
+using BlazorApp1.Client.Services.Login;
 using BlazorApp1.Client.Services.Moviles;
 using BlazorApp1.Client.Services.Notifications;
 using BlazorApp1.Client.Services.OT;
@@ -8,6 +9,8 @@ using BlazorApp1.Client.Services.Retiros;
 using BlazorApp1.Shared.User;
 using BlazorApp1.Shared.ViewModel;
 using Blazored.LocalStorage;
+using Blazored.SessionStorage;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Radzen;
@@ -26,6 +29,12 @@ namespace BlazorApp1.Client
             
 
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
+            builder.Services.AddBlazoredSessionStorageAsSingleton();
+            builder.Services.AddScoped<AuthenticationStateProvider, AuthExtension>();
+            builder.Services.AddAuthorizationCore();
+            builder.Services.AddScoped<LoginService>();
+
             builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddScoped<IRetirosRepoService,RetirosRepoService>();
             builder.Services.AddScoped<IOrdenTrabajoRepoService, OrdenTrabajoRepoService>();

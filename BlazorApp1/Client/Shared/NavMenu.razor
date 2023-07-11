@@ -1,74 +1,69 @@
-﻿@using BlazorApp1.Shared.User
-@inject Usuario usuario
-<div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">Rorschach's Code</a>
-    <button class="navbar-toggler" @onclick="ToggleNavMenu">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-</div>
-@*<RadzenLayout class="rz-shadow-3" Style="height: 400px; grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'">*@
+﻿@using BlazorApp1.Client.Services.Login;
+@using BlazorApp1.Shared.User
+@inject LoginService loginService
+@inject NavigationManager navManager
+
+
+<Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+
     <RadzenHeader>
-        <div class="d-flex align-items-center">
-            <RadzenSidebarToggle Click="@(() => collapseNavMenu = !collapseNavMenu)" />
-            <RadzenLabel Text="Header" />
-        </div>
+        <RadzenStack Orientation="Orientation.Horizontal"
+                     AlignItems="AlignItems.Center">
+            <RadzenStack Orientation="Orientation.Horizontal"
+                         AlignItems="AlignItems.Center"
+                         Gap="0">
+                <RadzenSidebarToggle Click="@(() => SideExpanded = !SideExpanded)" />
+                <RadzenLabel Text="THOT-ERP" />
+            </RadzenStack>
+
+            <RadzenStack Orientation="Orientation.Horizontal"
+                         AlignItems="AlignItems.End"
+                         Gap="0"
+                         Style="margin-left:auto">
+                <RadzenProfileMenu>
+                    <Template>
+                        <RadzenGravatar Email="@context.User.Identity?.Name?.ToString()" />
+                    </Template>
+                    <ChildContent>
+                        <RadzenButton Text="Salir"
+                                      Icon="person_off"
+                                      ButtonStyle="ButtonStyle.Dark"
+                                      Click="LogOut"
+                                      Shade="Shade.Dark"
+                                      Variant="Variant.Flat" />
+                    </ChildContent>
+                </RadzenProfileMenu>
+            </RadzenStack>
+        </RadzenStack>
     </RadzenHeader>
-    <RadzenSidebar @bind-Expanded="@collapseNavMenu">
+    <RadzenSidebar @bind-Expanded="@SideExpanded">
         <RadzenPanelMenu>
-            <RadzenPanelMenuItem Text="Inicio" Icon="home" Path="/"/>
-            <RadzenPanelMenuItem Text="Asignación" Icon="home" Path="Asignacion"/>
-            <RadzenPanelMenuItem Text="Bot Asignación" Icon="bot_toy" Path="AsignacionBot"/>
-            <RadzenPanelMenuItem Text="Reporte Sucursal" Icon="summarize" Path="AsignacionBot"/>
-            <RadzenPanelMenuItem Text="Configuracion" Icon="" Path="Configuracion" />
+            <RadzenPanelMenuItem Text="Inicio"
+                                 Icon="home"
+                                 Path="Index" />
+            <RadzenPanelMenuItem Text="Asignación"
+                                 Icon="home"
+                                 Path="Asignacion" />
+            <RadzenPanelMenuItem Text="Bot Asignación"
+                                 Icon="bot_toy"
+                                 Path="AsignacionBot" />
+            <RadzenPanelMenuItem Text="Reporte Sucursal"
+                                 Icon="summarize"
+                                 Path="AsignacionBot" />
+            <RadzenPanelMenuItem Text="Configuracion"
+                                 Icon=""
+                                 Path="Configuracion" />
         </RadzenPanelMenu>
-        
+
     </RadzenSidebar>
-
-@*</RadzenLayout>*@
-
-
-@*<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <ul class="nav flex-column">
-    <li class="nav-item px-3">
-    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-    <span class="oi oi-home .rz-color-secondary-darker" aria-hidden="true"></span> Home
-    </NavLink>
-    </li>
-    <li class="nav-item px-3">
-    <NavLink class="nav-link" href="counter">
-    <span class="oi oi-plus" aria-hidden="true"></span> Counter
-    </NavLink>
-    </li>
-    <li class="nav-item px-3" hidden="@(usuario.PaswordInBase64 == null)">
-    <NavLink class="nav-link" href="AsignacionBot">
-    <span class="oi oi-basket" aria-hidden="true"></span> Asignacion Bot
-    </NavLink>
-    </li>
-    <li class="nav-item px-3" hidden="@(usuario.PaswordInBase64 == null)">
-    <NavLink class="nav-link" href="SucursalReport">
-    <span class="oi oi-list" aria-hidden="true"></span> Reporte Sucursal
-    </NavLink>
-    </li>
-    <li class="nav-item px-3">
-    <NavLink class="nav-link" href="Configuracion">
-    <span class="oi oi-wrench" aria-hidden="true"></span> Configuracion
-    </NavLink>
-    </li>
-    <li class="nav-item px-3">
-    <NavLink class="nav-link" href="fetchdata">
-    <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-    </NavLink>
-    </li>
-    </ul>
-    </div>*@
+</Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
 @code {
-    private bool collapseNavMenu = true;
+    private bool SideExpanded = true;
 
-    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
+    private async Task LogOut()
     {
-        collapseNavMenu = !collapseNavMenu;
+        await loginService.LogOut();
+        navManager.NavigateTo("/");
     }
 }

@@ -1,45 +1,78 @@
-﻿@using BlazorApp1.Shared.User
-@inherits LayoutComponentBase
-@inject Usuario usuario
+﻿@inherits LayoutComponentBase
+@using BlazorApp1.Client.Services.Login;
+@inject LoginService loginService
+@inject NavigationManager navManager
 
-<RadzenDialog />
-<RadzenNotification />
-<RadzenContextMenu />
-<RadzenTooltip />
-<div class="page">
-    @*<div class="sidebar">
-        <NavMenu />
-        </div>
+<Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+    <NotAuthorized>
+        @{
+            navManager.NavigateTo("/");
+        }
+    </NotAuthorized>
+    <Authorized>
 
-        <div class="main">
-        <div class="top-row px-4">
-        <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
-        </div>
-        <RadzenBody>
-        <div class="content px-2">
-        @Body
-        </div>
-        </RadzenBody>
+        <RadzenDialog />
+        <RadzenNotification />
+        <RadzenContextMenu />
+        <RadzenTooltip />
 
-        </div>*@
-    <div class="main">
-
-        <RadzenLayout class="rz-shadow-3" Style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'">
+        <RadzenLayout>
             <RadzenHeader>
-                <div class="d-flex align-items-center">
-                    <RadzenSidebarToggle Click="@(() => collapseNavMenu = !collapseNavMenu)" />
-                    <RadzenLabel Text="Rorschach's Code" />
-                </div>
+                <RadzenStack Orientation="Orientation.Horizontal"
+                             AlignItems="AlignItems.Center">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 AlignItems="AlignItems.Center"
+                                 Gap="0">
+                        <RadzenSidebarToggle Click="@(() => SideExpanded = !SideExpanded)" />
+                        <RadzenLabel Text="Rorschach's Code" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 AlignItems="AlignItems.End"
+                                 Gap="0"
+                                 Style="margin-left:auto">
+                        <RadzenProfileMenu>
+                            <Template>
+                                <RadzenGravatar Email="@context.User.Identity?.Name?.ToString()" />
+                            </Template>
+                            <ChildContent>
+                                <RadzenButton Text="Salir"
+                                              Icon="person_off"
+                                              ButtonStyle="ButtonStyle.Dark"
+                                              Click="LogOut"
+                                              Shade="Shade.Dark"
+                                              Variant="Variant.Flat" />
+                            </ChildContent>
+                        </RadzenProfileMenu>
+                    </RadzenStack>
+                </RadzenStack>
+
             </RadzenHeader>
-            <RadzenSidebar @bind-Expanded="@collapseNavMenu" class="rz-color-white rz-background-color-primary-darker">
-                <RadzenPanelMenu class=" rz-color-white rz-background-color-primary-darker" Style="@fontStyle">
-                    <RadzenPanelMenuItem Text="Inicio" Icon="home" Path="/" />
-                    <RadzenPanelMenuItem Text="Asignación" Icon="assignment_add" Path="Asignacion" Visible=@(usuario.PaswordInBase64 != null) />
-                    <RadzenPanelMenuItem Text="Bot Asignación" Icon="smart_toy" Path="AsignacionBot" Visible=@(usuario.PaswordInBase64 != null) />
-                    <RadzenPanelMenuItem Text="Reporte Sucursal" Icon="summarize" Path="SucursalReport" Visible=@(usuario.PaswordInBase64 != null)/>
-                    <RadzenPanelMenuItem Text="Ordenes Trabajo" Icon="order_play" Path="Ordenes" Visible=@(usuario.PaswordInBase64 != null) />
-                    <RadzenPanelMenuItem Text="Historial Fallidos" Icon="timeline" Path="Fallidos" Visible=@(usuario.PaswordInBase64 != null) />
-                    <RadzenPanelMenuItem Text="Configuracion" Icon="settings" Path="Configuracion"/>
+            <RadzenSidebar @bind-Expanded="@SideExpanded"
+                           class="rz-color-white rz-background-color-primary-darker">
+                <RadzenPanelMenu class=" rz-color-white rz-background-color-primary-darker"
+                                 Style="font-weight:800;font-size:1.2rem">
+                    <RadzenPanelMenuItem Text="Inicio"
+                                         Icon="home"
+                                         Path="/Index" />
+                    <RadzenPanelMenuItem Text="Asignación"
+                                         Icon="assignment_add"
+                                         Path="Asignacion" />
+                    <RadzenPanelMenuItem Text="Bot Asignación"
+                                         Icon="smart_toy"
+                                         Path="AsignacionBot" />
+                    <RadzenPanelMenuItem Text="Reporte Sucursal"
+                                         Icon="summarize"
+                                         Path="SucursalReport" />
+                    <RadzenPanelMenuItem Text="Ordenes Trabajo"
+                                         Icon="order_play"
+                                         Path="Ordenes" />
+                    <RadzenPanelMenuItem Text="Historial Fallidos"
+                                         Icon="timeline"
+                                         Path="Fallidos" />
+                    <RadzenPanelMenuItem Text="Configuracion"
+                                         Icon="settings"
+                                         Path="Configuracion" />
                 </RadzenPanelMenu>
 
             </RadzenSidebar>
@@ -49,10 +82,16 @@
                 </div>
             </RadzenBody>
         </RadzenLayout>
-    </div>
-</div>
+    </Authorized>
+
+</Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+
 @code {
-    private bool collapseNavMenu = false;
-    private string fontStyle = @"font-weight:800;font-size:1.2rem";
-    //private static bool VisibleOrNot = usuario.PaswordInBase64 != null;
+    private bool SideExpanded = true;
+
+    private async Task LogOut()
+    {
+        await loginService.LogOut();
+        navManager.NavigateTo("/");
+    }
 }
