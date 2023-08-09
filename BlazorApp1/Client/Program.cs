@@ -26,9 +26,10 @@ namespace BlazorApp1.Client
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
             builder.RootComponents.Add<App>("#app");
-            
+
 
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+            builder.Services.AddScoped<LoadingScreen>();
 
             builder.Services.AddBlazoredSessionStorageAsSingleton();
             builder.Services.AddScoped<AuthenticationStateProvider, AuthExtension>();
@@ -36,7 +37,7 @@ namespace BlazorApp1.Client
             builder.Services.AddScoped<LoginService>();
 
             builder.Services.AddBlazoredLocalStorage();
-            builder.Services.AddScoped<IRetirosRepoService,RetirosRepoService>();
+            builder.Services.AddScoped<IRetirosRepoService, RetirosRepoService>();
             builder.Services.AddScoped<IOrdenTrabajoRepoService, OrdenTrabajoRepoService>();
             //builder.Services.AddScoped<IUsuario, Usuario>();
             builder.Services.AddScoped<Usuario>();
@@ -52,7 +53,6 @@ namespace BlazorApp1.Client
             builder.Services.AddScoped<ContextMenuService>();
 
             //builder.Services.AddScoped<LoadingDialog>();
-            builder.Services.AddScoped<LoadingScreen>();
             builder.Services.AddScoped<INoteService, NoteService>();
             builder.Services.AddScoped<IDialogFrameService, DialogFrameService>();
 

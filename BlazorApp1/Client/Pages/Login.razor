@@ -1,7 +1,10 @@
 ﻿@page "/"
 @using BlazorApp1.Client.Services.Login;
+@using BlazorApp1.Client.Services.Notifications;
+@using BlazorApp1.Shared.Excepciones;
 @layout LoginLayout
 @inject NavigationManager navManager;
+@inject INoteService noteService
 
 
 @inject LoginService loginService
@@ -25,8 +28,8 @@
                                class="form-control"
                                Visible="VisiblePass"
                                Placeholder="Contraseña" />
-                <RadzenButton  Icon="@IconText()"
-                                Click="(() => VisiblePass = !VisiblePass)"/>
+                <RadzenButton Icon="@IconText()"
+                              Click="(() => VisiblePass = !VisiblePass)" />
             </div>
 
             <RadzenButton Text="Login"
@@ -46,9 +49,16 @@
 
     private async Task InicioSesion()
     {
+        try
+        {
 
-        if (await loginService.Login(login))
-            navManager.NavigateTo("/Index");
+            if (await loginService.Login(login))
+                navManager.NavigateTo("/Index");
+        }
+        catch (ExceptionResponse exRes)
+        {
+            noteService.NotifyResponse(exRes);
+        }
 
     }
 }

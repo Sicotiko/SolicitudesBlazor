@@ -1,12 +1,8 @@
 ﻿using BlazorApp1.Client.Components.Loading;
-using Microsoft.AspNetCore.Components;
+using BlazorApp1.Client.Services.Notifications;
 using Microsoft.AspNetCore.Components.Authorization;
-using System;
-using System.Linq.Dynamic.Core.Tokenizer;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BlazorApp1.Client.Services.Login
@@ -16,11 +12,13 @@ namespace BlazorApp1.Client.Services.Login
         private readonly AuthenticationStateProvider authProvider;
         private readonly HttpClient httpClient;
         private readonly LoadingScreen _loadingScreen;
-        public LoginService(AuthenticationStateProvider authProvider, HttpClient httpClient, LoadingScreen loadingScreen)
+        private readonly INoteService _noteService;
+        public LoginService(AuthenticationStateProvider authProvider, HttpClient httpClient, LoadingScreen loadingScreen, INoteService noteService)
         {
             this.authProvider = authProvider;
             this.httpClient = httpClient;
             this._loadingScreen = loadingScreen;
+            this._noteService = noteService;
         }
 
         public async Task<bool> Login(BlazorApp1.Shared.User.Usuario login)
@@ -35,6 +33,11 @@ namespace BlazorApp1.Client.Services.Login
                 //this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sesionUsuario.Token);
                 _loadingScreen.Close();
                 return true;
+            }
+            else
+            {
+                var stringResponse = await loginResponse.Content.ReadAsStringAsync();
+                _noteService.NotifyBase("Error",stringResponse,Radzen.NotificationSeverity.Error);
             }
             _loadingScreen.Close();
             return false;

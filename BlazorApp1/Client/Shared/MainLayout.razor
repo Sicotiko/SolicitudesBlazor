@@ -10,7 +10,6 @@
         }
     </NotAuthorized>
     <Authorized>
-
         <RadzenDialog />
         <RadzenNotification />
         <RadzenContextMenu />
@@ -70,9 +69,17 @@
                     <RadzenPanelMenuItem Text="Historial Fallidos"
                                          Icon="timeline"
                                          Path="Fallidos" />
-                    <RadzenPanelMenuItem Text="Configuracion"
-                                         Icon="settings"
-                                         Path="Configuracion" />
+
+                    @if (context.User.IsInRole("Super"))
+                    {
+                        <RadzenPanelMenuItem Text="Configuracion"
+                                             Icon="settings"
+                                             Path="Configuracion" />
+                    }
+
+
+
+
                 </RadzenPanelMenu>
 
             </RadzenSidebar>

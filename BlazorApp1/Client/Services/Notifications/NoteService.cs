@@ -1,4 +1,5 @@
 ﻿using BlazorApp1.Shared.Excepciones;
+using BlazorApp1.Shared.Modelo.OT;
 using Radzen;
 using System;
 
@@ -78,6 +79,17 @@ namespace BlazorApp1.Client.Services.Notifications
                 Detail = $"La OT {ordenTrabajo.Numero} se cerró exitosamente.",
                 Severity = NotificationSeverity.Success,
                 Duration = DurationLocal
+            });
+        }
+
+        public void NotifyBase(string Titulo, string Detalle, NotificationSeverity Gravedad = NotificationSeverity.Success, double Duracion = 5000)
+        {
+            notificationService.Notify(new NotificationMessage()
+            {
+                Summary = Titulo,
+                Detail = Detalle,
+                Severity = Gravedad,
+                Duration = Duracion
             });
         }
     }

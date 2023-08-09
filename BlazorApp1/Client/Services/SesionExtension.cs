@@ -15,7 +15,7 @@ namespace BlazorApp1.Client.Services
         public static async Task<T?> GetStorage<T>(this ISessionStorageService sessionService, string key) where T : class
         {
             var itemJson = await sessionService.GetItemAsStringAsync(key);
-            if (itemJson == null)
+            if (itemJson != null)
                 return JsonSerializer.Deserialize<T>(itemJson);
             else
                 return null;
