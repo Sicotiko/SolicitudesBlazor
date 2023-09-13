@@ -5,29 +5,21 @@
 
 @inject NavigationManager navigation
 @inject Usuario user
-@inject ListadoTipoMovil listadoMovilesDisponibles
 @inject MovilesService MovilesRepo
 @inject NotificationService NotifyRepo
 
 <Asignacion />
 @code {
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         try
         {
             user.GetCredentials();
-            try
-            {
-                listadoMovilesDisponibles.TipoMoviles = await MovilesRepo.GetMovilesDisponibles();
-            }
-            catch (ExceptionResponse exRes)
-            {
-                this.NotifyRepo.Notify(NotificationSeverity.Error, "Error!", exRes.Message);
-            }
         }
-        catch
+        catch (Exception ex)
         {
-            navigation.NavigateTo("/Configuracion");
+            navigation.NavigateTo("/");
         }
+        return base.OnInitializedAsync();
     }
 }

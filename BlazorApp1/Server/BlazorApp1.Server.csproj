@@ -24,6 +24,11 @@
     <ProjectReference Include="..\Shared\BlazorApp1.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\OT\" />
+    <Folder Include="Controllers\Retiros\" />
+  </ItemGroup>
+
   <ProjectExtensions><VisualStudio><UserProperties properties_4launchsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 
 

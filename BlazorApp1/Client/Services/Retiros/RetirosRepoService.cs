@@ -158,7 +158,7 @@ namespace BlazorApp1.Client.Services.Retiros
 
         public async Task HistorialClienteInDialog(Retiro retiro)
         {
-            IEnumerable<Retiro> RetirosHistorial = await GetRetirosHistorialCliente(retiro.CodigoCliente, retiro.CodigoPostal, DateTime.Today.AddDays(-7), DateTime.Today);
+            IEnumerable<Retiro> RetirosHistorial = await GetRetirosHistorialCliente(retiro.CodigoCliente, retiro.CodigoPostal.ToString(), DateTime.Today.AddDays(-7), DateTime.Today);
             await _dialogService.OpenAsync<HistorialCliente>($"{retiro.Nombre} - Historial Semanal", new Dictionary<string, object>()
                                                                                                     {
                                                                                                         {

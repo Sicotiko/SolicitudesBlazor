@@ -1,13 +1,20 @@
 ﻿@page "/"
+@using BlazorApp1.Client.Services.ClienteWeb;
 @using BlazorApp1.Client.Services.Login;
 @using BlazorApp1.Client.Services.Notifications;
+@using BlazorApp1.Client.Services;
 @using BlazorApp1.Shared.Excepciones;
+@using BlazorApp1.Shared.Modelo.Moviles;
+@using BlazorApp1.Shared.User;
+@using Newtonsoft.Json;
 @layout LoginLayout
 @inject NavigationManager navManager;
 @inject INoteService noteService
 
-
 @inject LoginService loginService
+
+@inject MovilesService movilesService
+@inject Usuario usuario
 
 <div style="width:100vw;height:100vh;position:relative;">
     <RadzenCard Style="max-width: 20vw;position: absolute;top: 50%;left: 50%;transform: translate(-50%,-50%);"
@@ -15,16 +22,16 @@
         <RadzenStack Orientation="Orientation.Vertical">
             <RadzenIcon Icon="person"
                         Style="border: solid 1px;border-radius: 53%;width: 150px;height: 150px;margin-top: -100px;margin-left: auto;margin-right: auto; font-size:120px;background-color: rgba(150,80,255,.6);" />
-            <RadzenTextBox @bind-Value="@login.UserInBase64"
+            <RadzenTextBox @bind-Value="@usuario.UserInBase64"
                            Placeholder="Nombre de Usuario" />
 
             <div class="input-group mb-3">
 
-                <RadzenPassword @bind-Value="@login.PaswordInBase64"
+                <RadzenPassword @bind-Value="@usuario.PaswordInBase64"
                                 class="form-control"
                                 Visible="!VisiblePass"
                                 Placeholder="Contraseña" />
-                <RadzenTextBox @bind-Value="@login.PaswordInBase64"
+                <RadzenTextBox @bind-Value="@usuario.PaswordInBase64"
                                class="form-control"
                                Visible="VisiblePass"
                                Placeholder="Contraseña" />
@@ -43,7 +50,6 @@
     </RadzenCard>
 </div>
 @code {
-    private BlazorApp1.Shared.User.Usuario login = new BlazorApp1.Shared.User.Usuario();
     private bool VisiblePass = false;
     private string IconText() => VisiblePass ? "visibility" : "visibility_off";
 
@@ -51,9 +57,21 @@
     {
         try
         {
+            // clientInstance.SetCredentials(login);
+            // moviles = await serviceLogin.GetMovilesDisponiblesAsync();
 
-            if (await loginService.Login(login))
+            // if (moviles.Count() != 0)
+            //     Console.WriteLine(JsonConvert.SerializeObject(moviles));
+            // else
+            //     Console.WriteLine("No Hay nAh!");
+            Console.WriteLine(DateTime.Today.ToShortDateString());
+            if (await loginService.Login(usuario))
+            {
+                // Console.WriteLine(movilesService.MovilesDisponibles);
+                // var disp = await loginService.GetMovilesDisponibles();
+                // movilesService.SetMovilesDisponibles(disp);
                 navManager.NavigateTo("/Index");
+            }
         }
         catch (ExceptionResponse exRes)
         {

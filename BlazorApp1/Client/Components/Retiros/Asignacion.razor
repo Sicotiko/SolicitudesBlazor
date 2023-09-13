@@ -1,18 +1,22 @@
 ﻿@using BlazorApp1.Client.Services.Dialogs
 @using BlazorApp1.Client.Services.Notifications
+@using BlazorApp1.Client.Utilities;
 @using BlazorApp1.Shared.Excepciones
 @using BlazorApp1.Shared.Modelo.Comunas
+@using BlazorApp1.Shared.Modelo.Moviles;
 @using BlazorApp1.Shared.Modelo.Retiros
 @using BlazorApp1.Shared.Utilities
 @using System.Timers
+@using BlazorApp1.Shared.Utlilities;
 @using BlazorApp1.Shared.ViewModel
-@inject IRetirosRepoService RetirosRepo
-@inject IOrdenTrabajoRepoService OrdenesRepo
 @inject INoteService Note
 @inject IDialogFrameService dialog
 @inject LoadingScreen LoadScreen
-@inject ListadoTipoMovil ListadoMovilesDisponibles
 @inject NotificationService NotificationRepo
+
+@inject RetirosService retirosService
+@inject MovilesService movilesService
+@inject IClipboardService clipboardService
 
 
 <RadzenCard>
@@ -24,8 +28,13 @@
         <div class="col-lg-6 col-xl-4 p-3">
             <RadzenCard>
                 <RadzenText Text="Sector" />
-                <RadzenDropDown Data="@(Enum.GetValues(typeof(SectorName)).Cast<Enum>())"
-                                @bind-Value="sectorName" />
+                <RadzenDropDown @bind-Value="sectorName"
+                                TValue="NombreSector"
+                                Data="Enum.GetValues(typeof(NombreSector))">
+                    <Template Context="data">
+                        @(((NombreSector)data).GetEnumDescription())
+                    </Template>
+                </RadzenDropDown>
             </RadzenCard>
         </div>
         <div class="col-lg-6 col-xl-4 p-3">
@@ -38,7 +47,7 @@
                 </div>
                 <div class="row px-2" style="margin-top: 10px;">
                     <RadzenCheckBox TValue="bool"
-                                    @bind-Value="autoActualizacion"
+                    @bind-Value="autoActualizacion"
                                     Name="autoRefreshChk"
                                     Change=TryToActivateTimer />
                     <RadzenLabel Text="Auto Actualizar?"
@@ -51,7 +60,7 @@
                                       TimeOnly="true"
                                       ShowSeconds="true"
                                       DateFormat="mm:ss"
-                                      @bind-Value="FiveMinutesToRefresh"
+                    @bind-Value="FiveMinutesToRefresh"
                                       ReadOnly="false"
                                       Change=@(args => TimeToRespawn = args) />
                 </div>
@@ -64,6 +73,9 @@
                               Icon="assignment_turned_in"
                               Click="ConfirmToAssign"
                               Disabled="GridLoading" />
+                <RadzenButton Text="Actualizar"
+                              Disabled="true"
+                              Click="@gridActual.Reload" />
             </RadzenCard>
         </div>
     </div>
@@ -71,11 +83,12 @@
 @*<RadzenCard>*@
 <RadzenText Text=@($"Retiros a Asignar ({RetirosActual.Count()}) Retiros Pendientes") />
 
-<RadzenDataGrid TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
-                Data="RetirosActual"
-                @ref="gridActual"
+<RadzenDataGrid @ref="gridActual"
+                TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
+                Data="RetirosActual.AsEnumerable()"
                 AllowPaging="true"
                 PageSize="50"
+                Density="Density.Compact"
                 AllowAlternatingRows="true"
                 AllowSorting="true"
                 AllowFiltering="true"
@@ -83,6 +96,9 @@
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                 LogicalFilterOperator="LogicalFilterOperator.And"
                 IsLoading="GridLoading"
+                SelectionMode="DataGridSelectionMode.Single"
+@bind-Value="@selectedRetiros"
+                CellContextMenu="@OnCellContextMenu"
                 AllowColumnResize="true">
     <EmptyTemplate>
         <p style="color: lightgrey; font-size: 24px; text-align: center; margin: 2rem;">Sin retiros segun parametros.</p>
@@ -93,7 +109,7 @@
                               Title="Asignar?"
                               Filterable="false"
                               Sortable="false"
-                              Width="60px">
+                              Width="50px">
             <Template Context="retiro">
                 <RadzenCheckBox @bind-Value="retiro.Asignar" />
             </Template>
@@ -101,9 +117,9 @@
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="CodigoRetiro"
                               Title="N° Retiro"
-                              Width="122px">
+                              Width="130px">
             <Template Context="retiro">
-                <RadzenButton Text="@retiro.CodigoRetiro"
+                <RadzenButton Text="@retiro.CodigoRetiro.ToString()"
                               Click="@(args => OpenDetail(retiro))" />
             </Template>
         </RadzenDataGridColumn>
@@ -114,13 +130,22 @@
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="CodigoCliente"
                               Title="N° Cliente"
-                              Width="85px" />
+                              Width="117px">
+            <Template Context="data">
+                <RadzenIcon Icon="right_click"
+                            IconStyle="IconStyle.Info" />
+                <RadzenText Text="@data.CodigoCliente"
+                            TextStyle="TextStyle.Subtitle1"
+                @ondblclick="@(args => CopiarAlPortapapeles(data.CodigoCliente))" />
+            </Template>
+        </RadzenDataGridColumn>
+
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Direccion"
                               Title="Direccion"
                               Width="250px" />
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
-                              Property="Comuna"
+                              Property="Comuna.Nombre"
                               Title="Comuna"
                               Width="100px" />
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
@@ -134,22 +159,37 @@
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Bultos"
                               Title="Bultos"
-                              Width="100px" />
+                              Width="60px" />
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Kilos"
                               Title="Kilos"
-                              Width="100px">
+                              Width="60px">
             <Template Context="data">
                 @((data as BlazorApp1.Shared.Modelo.Retiros.Retiro).Kilos) (Kg)
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Movil"
+                              FilterProperty="Movil.Codigo"
+                              FilterOperator="FilterOperator.Equals"
                               Title="Movil"
-                              Width="85px">
+                              Width="220px">
             <Template Context="retiro">
-                <RadzenTextBox @bind-Value="retiro.Movil"
-                               MaxLength="6" />
+                @* <RadzenTextBox @bind-Value="retiro.Movil"
+                MaxLength="6" /> *@
+                <RadzenDropDown @bind-Value="retiro.Movil"
+                                TValue="Movil"
+                                Data="@movilesService.MovilesDisponibles"
+                                AllowClear="true"
+                                AllowFiltering="true"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                FilterOperator="StringFilterOperator.Contains"
+                                TextProperty="Codigo">
+                    <Template Context="data">
+                        @((data as Movil).Codigo + " || " + (data as Movil).Nombre)
+                    </Template>
+                </RadzenDropDown>
+
             </Template>
         </RadzenDataGridColumn>
 
@@ -158,14 +198,25 @@
 
 
 @code {
-    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosActual = new List<Retiro>();
-    SectorName sectorName;
+
+
+    List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosActual = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
+    IList<BlazorApp1.Shared.Modelo.Retiros.Retiro> selectedRetiros;
+
+    NombreSector sectorName;
     RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridActual;
     bool GridLoading, autoActualizacion = false;
     DateTime FiveMinutesToRefresh = DateTime.ParseExact("00:00", "mm:ss", System.Globalization.CultureInfo.InvariantCulture);
     DateTime? TimeToRespawn;
     int asignados = 0;
     Timer timerTickSecond;
+
+    private void dd()
+    {
+        // RetirosActual.First().Movil.Codigo
+
+    }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -255,48 +306,40 @@
         {
 
             RetirosActual = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
-            var comunas = Comunas.GetComunasPorSector(sectorName);
+            FiltroBusquedaRetiros filtro = new FiltroBusquedaRetiros
+                {
+                    Estado = Estado.PEND,
+                    FechaDesde = DateTime.Now.Date,
+                    Hasta = DateTime.Now.Date,
+                    NombreSector = sectorName
+                };
 
-            foreach (var comuna in comunas)
-            {
-                LoadScreen.Show($"Buscando en {comuna.Key}");
-                var newList = await RetirosRepo.GetRetirosPendientes("TODOS", comuna.Value, DateTime.Today, DateTime.Today);
-                newList.ToList().ForEach(ret => ret.Movil = string.Empty);
-                //newList.ToList().ForEach(ret => ret.Asignar = false);
-                RetirosActual.AddRange(newList);
-                await gridActual.Reload();
-                LoadScreen.Close();
-            }
-        }catch(ExceptionResponse exRes)
-        {
-            NotificationRepo.Notify(NotificationSeverity.Error,"Error!",exRes.Message);
+            LoadScreen.Show($"Buscando retiros pendientes");
+            await LoadRetiros(filtro);
             LoadScreen.Close();
         }
-
-    }
-
-    private async Task ObtenerOrdenTrabajo(Retiro retiro)
-    {
-        //await BusyDialog("Asignando N° de OT");
-
-
-        var ote = OrdenesRepo.Ordenes.FirstOrDefault(ot => ot.Tipo == retiro.TipoRetiro &&
-                                                           ot.Movil == retiro.Movil &&
-                                                           ot.Fecha == DateTime.Today &&
-                                                           ot.Estado != "CERRADA" &&
-                                                           ot.Repartos == 0);
-
-        if (ote == null)
+        catch (ExceptionResponse exRes)
         {
-            ote = await OrdenesRepo.CreateOrden(int.Parse(retiro.Movil));
-            ote.Tipo = retiro.TipoRetiro;
-            ote.SectorName = sectorName;
-            ote.Comuna = retiro.Comuna;
-            OrdenesRepo.Ordenes.Add(ote);
+            NotificationRepo.Notify(NotificationSeverity.Error, "Error!", exRes.Message);
+            LoadScreen.Close();
         }
+        catch (Exception exRes)
+        {
+            NotificationRepo.Notify(NotificationSeverity.Error, "Error!", exRes.Message);
+            LoadScreen.Close();
+        }
+        LoadScreen.Close();
 
-        retiro.Ot = ote.Numero;
     }
+    private async Task LoadRetiros(FiltroBusquedaRetiros filtro)
+    {
+        var newlist = await retirosService.GetRetirosPorSectorAsync(filtro);
+        foreach (var obj in newlist)
+            obj.Movil = null;
+        RetirosActual.AddRange(newlist);
+        await gridActual.Reload();
+    }
+
 
     private async Task AsignacionAsync()
     {
@@ -304,22 +347,27 @@
         LoadScreen.Show("Asignando...");
         try
         {
+            // List<Task> tasks = new List<Task>();
             asignados = 0;
             foreach (var retiro in RetirosActual.Where(r => r.Asignar == true &&
-                                                            r.Movil != ""))
+                                                            r.Movil != null))
             {
-                if (ListadoMovilesDisponibles.TipoMoviles.FirstOrDefault(tp => tp.Codigo.Contains(retiro.Movil)) == null)
-                {
-                    NotificationRepo.Notify(NotificationSeverity.Error, "MOVIL NO DISPONIBLE", $"El movil {retiro.Movil} no esta disponible en alertran", 15000);
-                    continue;
-                }
+                // if (ListadoMovilesDisponibles.TipoMoviles.FirstOrDefault(tp => tp.Codigo.Contains(retiro.Movil)) == null)
+                // {
+                //     NotificationRepo.Notify(NotificationSeverity.Error, "MOVIL NO DISPONIBLE", $"El movil {retiro.Movil} no esta disponible en alertran", 15000);
+                //     continue;
+                // }
 
-                await ObtenerOrdenTrabajo(retiro);
-
-                await RetirosRepo.AsignarAsync(retiro);
+                // tasks.Add(retirosService.AsignarAsync(retiro));
+                await retirosService.AsignarAsync(retiro);
                 asignados++;
+                // await ObtenerOrdenTrabajo(retiro);
+
+                // await RetirosRepo.AsignarAsync(retiro);
+                // asignados++;
                 //RetirosActual.Remove(retiro);
             }
+            // await Task.WhenAll(tasks);
         }
         catch
         {
@@ -329,6 +377,8 @@
         ConfirmFinishedWork();
 
     }
+
+
 
     async void ConfirmToAssign()
     {
@@ -367,5 +417,46 @@
     public async Task OpenDetail(Retiro retiroModel)
     {
         await dialog.OpenRetiroDetailAsync(retiroModel);
+    }
+
+    private async Task CopiarAlPortapapeles(string TextToCopy)
+    {
+        await clipboardService.CopyToClipboard(TextToCopy);
+        NotificationRepo.Notify(NotificationSeverity.Info, "Texto Copiado", TextToCopy, 1500d);
+    }
+    private async Task OnCellContextMenu(DataGridCellMouseEventArgs<BlazorApp1.Shared.Modelo.Retiros.Retiro> args)
+    {
+        // selectedRetiros = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>() { args.Data };
+        // await Task.Run(() =>
+        // {
+
+        //     ContextMenuService.Open(args,
+        //     new List<ContextMenuItem> {
+        //         new ContextMenuItem(){ Text = "Buscar Historial", Value = 1, Icon = "history" },
+        //         new ContextMenuItem(){ Text = "Copiar al portapapeles", Value = 2, Icon = "content_copy" }
+        //         // new ContextMenuItem(){ Text = "Context menu item 3", Value = 3, Icon = "info" },
+        //                                                                                                         },
+        //     async (e) =>
+        //     {
+        //         switch (int.Parse(e.Value.ToString()))
+        //         {
+        //             case 1:
+        //                 await CopiarAlPortapapeles(args.Data.CodigoCliente);
+        //                 break;
+        //             case 2:
+        //                 break;
+        //         }
+        //         Console.WriteLine("");
+        //         // console.Log($"Menu item with Value={e.Value} clicked. Column: {args.Column.Property}, EmployeeID: {args.Data.EmployeeID}");
+        //     }
+        //  );
+        // });
+    }
+
+    private async Task ShowHistoryClient(Retiro retiro)
+    {
+        FiltroBusquedaRetiros filtro = new FiltroBusquedaRetiros();
+
+
     }
 }

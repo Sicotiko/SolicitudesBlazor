@@ -10,6 +10,73 @@ namespace BlazorApp1.Shared.Utilities
     public static class Comunas
     {
 
+        //public static async Task<List<Comuna>> GetTotalComunasAsync()
+        //{
+        //    List<Comuna> list = new List<Comuna>();
+        //    await Task.Run(() =>
+        //    {
+        //        list.Add(new Comuna { Nombre = "Colina", CodigoPostal = "9340000", NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "Lampa", CodigoPostal = "9380000", NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "TilTil", CodigoPostal = "9420000", NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "Pirque", CodigoPostal = "9480000", NombreSector = NombreSector.NorteExtra });
+        //        list.Add(new Comuna { Nombre = "Puente Alto", CodigoPostal = "8150000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "San José de Maipo", CodigoPostal = "9460000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "Buin", CodigoPostal = "9500000", NombreSector = NombreSector.NorteExtra });
+        //        list.Add(new Comuna { Nombre = "Calera de Tango", CodigoPostal = "9560000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "Paine", CodigoPostal = "9540000", NombreSector = NombreSector.NorteExtra });
+        //        list.Add(new Comuna { Nombre = "San Bernardo", CodigoPostal = "8050000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "Alhué", CodigoPostal = "9650000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "Curacaví", CodigoPostal = "9630000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "María Pinto", CodigoPostal = "9620000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "Melipilla", CodigoPostal = "9580000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "San Pedro", CodigoPostal = "9660000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "Cerrillos", CodigoPostal = "9200000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Cerro Navia", CodigoPostal = "9080000", NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "Conchalí", CodigoPostal = "8540000", NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "El Bosque", CodigoPostal = "8010000", NombreSector = NombreSector.NorteExtra });
+        //        list.Add(new Comuna { Nombre = "Estación Central", CodigoPostal = "9160000", NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "Huechuraba", CodigoPostal = "8580000", NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "Independencia", CodigoPostal = "8380000", NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "La Cisterna", CodigoPostal = "7970000", NombreSector = NombreSector.NorteExtra });
+        //        list.Add(new Comuna { Nombre = "La Florida", CodigoPostal = "8240000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "La Granja", CodigoPostal = "8780000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "La Pintana", CodigoPostal = "8820000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "La Reina", CodigoPostal = "7850000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Las Condes", CodigoPostal = "7550000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Lo Barnechea", CodigoPostal = "7690000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Lo Espejo", CodigoPostal = "9120000" , NombreSector = NombreSector.NorteExtra });
+        //        list.Add(new Comuna { Nombre = "Lo Prado", CodigoPostal = "8980000" , NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "Macul", CodigoPostal = "7810000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Maipú", CodigoPostal = "9250000" , NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Ñuñoa", CodigoPostal = "7750000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Pedro Aguirre Cerda", CodigoPostal = "8460000" , NombreSector = NombreSector.NorteExtra  });
+        //        list.Add(new Comuna { Nombre = "Peñalolén", CodigoPostal = "7910000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Providencia", CodigoPostal = "7500000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Pudahuel", CodigoPostal = "9020000" , NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "Quilicura", CodigoPostal = "8700000" , NombreSector = NombreSector.Norte});
+        //        list.Add(new Comuna { Nombre = "Quinta Normal", CodigoPostal = "8500000" , NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "Recoleta", CodigoPostal = "8420000" , NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "Renca", CodigoPostal = "8640000" , NombreSector = NombreSector.Norte });
+        //        list.Add(new Comuna { Nombre = "San Joaquín", CodigoPostal = "8940000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "San Miguel", CodigoPostal = "8900000", NombreSector = NombreSector.NorteExtra });
+        //        list.Add(new Comuna { Nombre = "San Ramón", CodigoPostal = "8860000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Santiago", CodigoPostal = "8320000", NombreSector = NombreSector.Santiago });
+        //        list.Add(new Comuna { Nombre = "Vitacura", CodigoPostal = "7630000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "El Monte", CodigoPostal = "9810000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "Isla de Maipo", CodigoPostal = "9790000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "Padre Hurtado", CodigoPostal = "9710000", NombreSector = NombreSector.Oriente });
+        //        list.Add(new Comuna { Nombre = "Peñaflor", CodigoPostal = "9750000", NombreSector = NombreSector.SantiagoExtra });
+        //        list.Add(new Comuna { Nombre = "Talagante", CodigoPostal = "9670000", NombreSector = NombreSector.NorteExtra });
+        //        list.Add(new Comuna { Nombre = "San Antonio", CodigoPostal = "2660000", NombreSector = NombreSector.SanAntonio });
+        //        list.Add(new Comuna { Nombre = "Algarrobo", CodigoPostal = "2710000", NombreSector = NombreSector.SanAntonio });
+        //        list.Add(new Comuna { Nombre = "Cartagena", CodigoPostal = "2680000", NombreSector = NombreSector.SanAntonio });
+        //        list.Add(new Comuna { Nombre = "El Tabo", CodigoPostal = "2690000", NombreSector = NombreSector.SanAntonio });
+        //        list.Add(new Comuna { Nombre = "El Quisco", CodigoPostal = "2700000", NombreSector = NombreSector.SanAntonio });
+        //        list.Add(new Comuna { Nombre = "Santo Domingo", CodigoPostal = "2720000", NombreSector = NombreSector.SanAntonio });
+        //    });
+
+        //    return list;
+        //}
         public static Dictionary<string, string> GetComunas()
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
@@ -94,7 +161,7 @@ namespace BlazorApp1.Shared.Utilities
             }
         }
 
-        private static Dictionary<string,string> GetComunasSanAntonio()
+        private static Dictionary<string, string> GetComunasSanAntonio()
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
             result.Add("San Antonio", "2660000");
@@ -105,14 +172,14 @@ namespace BlazorApp1.Shared.Utilities
             result.Add("Santo Domingo", "2720000");
             return result;
         }
-        private static Dictionary<string,string> GetComunasSantiago()
+        private static Dictionary<string, string> GetComunasSantiago()
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
             result.Add("Santiago", "8320000");
 
             return result;
         }
-        private static Dictionary<string,string> GetComunasNorte()
+        private static Dictionary<string, string> GetComunasNorte()
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
             result.Add("Independencia", "8380000");

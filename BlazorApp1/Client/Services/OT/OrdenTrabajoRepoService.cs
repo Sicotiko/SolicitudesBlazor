@@ -1,5 +1,6 @@
 ﻿using BlazorApp1.Shared.ControllerModel;
 using BlazorApp1.Shared.Excepciones;
+using BlazorApp1.Shared.Modelo.Moviles;
 using BlazorApp1.Shared.Modelo.OT;
 using BlazorApp1.Shared.User;
 using System;
@@ -69,6 +70,11 @@ namespace BlazorApp1.Client.Services.OT
                 Ordenes = await response.Content.ReadFromJsonAsync<List<OrdenTrabajo>>();
             else
                 throw new ExceptionResponse(await response.Content.ReadAsStringAsync());
+        }
+
+        public Task<OrdenTrabajo> CreateOrden(Movil movil)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,27 +1,32 @@
-﻿using BlazorApp1.Server.Controllers.Retiros;
+﻿using BlazorApp1.Server.Services;
 using BlazorApp1.Shared.ControllerModel;
 using BlazorApp1.Shared.Excepciones;
+using BlazorApp1.Shared.Modelo.OT;
 using BlazorApp1.Shared.Modelo.Retiros;
-using BlazorApp1.Shared.User;
-using Microsoft.AspNetCore.Http;
+using BlazorApp1.Shared.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace BlazorApp1.Server.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class RetirosController : ControllerBase
     {
-        private readonly IRetirosRepo _retirosRepo;
+        private readonly ServiceRetiro serviceRetiro;
+        private ListadoOrdenes listadoOrdenes { get; set; }
+        private readonly ServiceOrdenTrabajo serviceOrdenTrabajo;
+        private readonly ServiceComuna serviceComuna;
 
-        public RetirosController(IRetirosRepo retirosRepo)
+        public RetirosController(ServiceRetiro serviceRetiro, ListadoOrdenes listadoOrdenes, ServiceOrdenTrabajo serviceOrdenTrabajo, ServiceComuna serviceComuna)
         {
-            _retirosRepo = retirosRepo;
+            this.serviceRetiro = serviceRetiro;
+            this.listadoOrdenes = listadoOrdenes;
+            this.serviceOrdenTrabajo = serviceOrdenTrabajo;
+            this.serviceComuna = serviceComuna;
         }
 
         [HttpPost("Asignar")]
@@ -31,12 +36,55 @@ namespace BlazorApp1.Server.Controllers
 
             try
             {
-                await _retirosRepo.AsignarRetiroAsync(retiroToAssign.retiro, retiroToAssign.usuario);
+
+                //OrdenTrabajo? ote;
+
+                //var cod = retiroToAssign.retiro.Movil.Codigo;
+                //var com = retiroToAssign.retiro.Comuna;
+                //var tp = retiroToAssign.retiro.TipoHorario;
+                //var fc = DateTime.Now.Date.ToUniversalTime();
+
+                //var or = listadoOrdenes.GetOrdenes();
+
+                //OrdenTrabajo? orden = listadoOrdenes.GetOrdenes().FirstOrDefault(o => o.Movil.Codigo == retiroToAssign.retiro.Movil.Codigo &&
+                //                                                       o.Comuna.CodigoPostal == retiroToAssign.retiro.Comuna.CodigoPostal &&
+                //                                                       o.TipoHorario == retiroToAssign.retiro.TipoHorario &&
+                //                                                       o.Fecha.Date.ToUniversalTime() == DateTime.Now.Date.ToUniversalTime());
+                OrdenTrabajo? orden = await serviceOrdenTrabajo.GetOrdenAsync(o => o.Movil.Codigo == retiroToAssign.retiro.Movil.Codigo &&
+                                                                              o.TipoHorario == retiroToAssign.retiro.TipoHorario &&
+                                                                              o.Fecha.Year == DateTime.Now.Year &&
+                                                                              o.Fecha.Month == DateTime.Now.Month &&
+                                                                              o.Fecha.Day == DateTime.Now.Day &&
+                                                                              !o.Cerrada);
+
+                if (orden != null)
+                    retiroToAssign.retiro.OrdenTrabajo = orden;
+                else
+                {
+
+                    retiroToAssign.retiro.OrdenTrabajo = await serviceOrdenTrabajo.CreateOrdenTrabajoAsync(new Shared.Modelo.OT.OrdenViewModel
+                    {
+                        OrdenDeTrabajo = new Shared.Modelo.OT.OrdenTrabajo
+                        {
+                            Clasificacion = retiroToAssign.retiro.Clasificacion,
+                            Comuna = retiroToAssign.retiro.Comuna,
+                            Fecha = DateTime.Now.Date.ToUniversalTime(),
+                            Movil = retiroToAssign.retiro.Movil,
+                            SectorName = retiroToAssign.retiro.NombreSector,
+                            TipoHorario = retiroToAssign.retiro.TipoHorario
+                        },
+                        Usuario = retiroToAssign.usuario
+                    });
+
+                    //listadoOrdenes.AddOrden(retiroToAssign.retiro.OrdenTrabajo);
+                }
+
+                await serviceRetiro.Asignar(retiroToAssign);
                 actionResult = Ok();
             }
             catch (ConnectionException ConnEx)
             {
-                actionResult = StatusCode(502,ConnEx.Message); //badGateway
+                actionResult = StatusCode(502, ConnEx.Message); //badGateway
             }
             catch (CredentialsException CredEx)
             {
@@ -46,23 +94,16 @@ namespace BlazorApp1.Server.Controllers
             return actionResult;
         }
 
-        [HttpPost("GetRetiros/{TipoEntrada}/{Comuna}/{EstadoRetiro}/{diaDesde}/{mesDesde}/{anioDesde}/{diaHasta}/{mesHasta}/{anioHasta}")]
-        public async Task<IActionResult> GetRetiros(string TipoEntrada, string Comuna, string EstadoRetiro,
-                                                    string diaDesde, string mesDesde, string anioDesde,
-                                                    string diaHasta, string mesHasta, string anioHasta,
-                                                    [FromBody] Usuario usuario)
+        [HttpPost("GetRetiros")]
+        public async Task<IActionResult> GetRetiros([FromBody] FiltroBusquedaRetiros filtro)
         {
             IActionResult actionResult = BadRequest();
 
             try
             {
-                DateTime FechaDesde = DateTime.Parse($"{diaDesde}/{mesDesde}/{anioDesde}");
-                DateTime FechaHasta = DateTime.Parse($"{diaHasta}/{mesHasta}/{anioHasta}");
-                if (EstadoRetiro == "TODOS")
-                    EstadoRetiro = "";
-                TipoEntrada = TipoEntrada == "TODOS" ? "" : TipoEntrada;
-
-                IEnumerable listadoRetiros = await _retirosRepo.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario, EstadoRetiro);
+                filtro.FechaDesde = filtro.FechaDesde.ToUniversalTime();
+                filtro.Hasta = filtro.Hasta.ToUniversalTime();
+                IEnumerable<Retiro> listadoRetiros = await serviceRetiro.GetRetirosAsync(filtro);
                 actionResult = Ok(listadoRetiros);
             }
             catch (ConnectionException ConnEx)
@@ -76,29 +117,28 @@ namespace BlazorApp1.Server.Controllers
 
             return actionResult;
         }
-        [HttpPost("GetFallidos/{TipoEntrada}/{Comuna}/{EstadoRetiro}/{diaDesde}/{mesDesde}/{anioDesde}/{diaHasta}/{mesHasta}/{anioHasta}/{CodCliente}")]
-        public async Task<IActionResult> GetRetirosFallidos(string TipoEntrada, string Comuna, string EstadoRetiro,
-                                                            string diaDesde, string mesDesde, string anioDesde,
-                                                            string diaHasta, string mesHasta, string anioHasta,
-                                                            string CodCliente,
-                                                            [FromBody] Usuario usuario)
+        [HttpPost("GetRetirosPorSector")]
+        public async Task<IActionResult> GetRetirosPorSector([FromBody] FiltroBusquedaRetiros filtro)
         {
             IActionResult actionResult = BadRequest();
 
             try
             {
-                DateTime FechaDesde = DateTime.Parse($"{diaDesde}/{mesDesde}/{anioDesde}");
-                DateTime FechaHasta = DateTime.Parse($"{diaHasta}/{mesHasta}/{anioHasta}");
-                
-                TipoEntrada = TipoEntrada == "TODOS" ? "" : TipoEntrada;
-                CodCliente = CodCliente == "TODOS" ? "" : CodCliente;
-                EstadoRetiro = EstadoRetiro == "TODOS" ? "" : EstadoRetiro;
-                
+                filtro.FechaDesde = filtro.FechaDesde.ToUniversalTime();
+                filtro.Hasta = filtro.Hasta.ToUniversalTime();
+                List<Retiro> retiros = new List<Retiro>();
+                var comunas = await serviceComuna.GetSomeAsync(com => com.NombreSector == filtro.NombreSector);
+                foreach (var comuna in comunas)
+                {
+                    await Task.Run(async () =>
+                    {
 
-                IEnumerable<Retiro> listadoRetiros = await _retirosRepo.GetRetirosAsync(TipoEntrada, Comuna, FechaDesde, FechaHasta, usuario, EstadoRetiro,Cliente: CodCliente);
-                listadoRetiros.ToList().ForEach(async ret => await _retirosRepo.GetIncidencias(ret,usuario));
+                        filtro.Poblacion = comuna.CodigoPostal;
+                        retiros.AddRange(await serviceRetiro.GetRetirosAsync(filtro));
+                    });
+                }
 
-                actionResult = Ok(listadoRetiros);
+                actionResult = Ok(retiros.AsEnumerable());
             }
             catch (ConnectionException ConnEx)
             {
@@ -113,105 +153,5 @@ namespace BlazorApp1.Server.Controllers
         }
 
 
-        [HttpPost("GetRetirosByMovil/{TipoEntrada}/{Movil}/{EstadoRetiro}/{diaDesde}/{mesDesde}/{anioDesde}/{diaHasta}/{mesHasta}/{anioHasta}")]
-        public async Task<IActionResult> GetRetirosByMovil(string TipoEntrada, string EstadoRetiro,
-                                                           string diaDesde, string mesDesde, string anioDesde,
-                                                           string diaHasta, string mesHasta, string anioHasta,
-                                                           string Movil, [FromBody] Usuario usuario)
-        {
-            IActionResult actionResult = BadRequest();
-
-            try
-            {
-                DateTime FechaDesde = DateTime.Parse($"{diaDesde}/{mesDesde}/{anioDesde}");
-                DateTime FechaHasta = DateTime.Parse($"{diaHasta}/{mesHasta}/{anioHasta}");
-
-                IEnumerable listadoRetiros = await _retirosRepo.GetRetirosAsync(TipoEntrada, "", FechaDesde, FechaHasta, usuario, EstadoRetiro, Movil: Movil);
-                actionResult = Ok(listadoRetiros);
-            }
-            catch (ConnectionException ConnEx)
-            {
-                actionResult = StatusCode(900, ConnEx.Message);
-            }
-            catch (CredentialsException CredEx)
-            {
-                actionResult = StatusCode(901, CredEx.Message);
-            }
-
-            return actionResult;
-        }
-
-        [HttpPost("GetRetirosByCliente/{diaDesde}/{mesDesde}/{anioDesde}/{diaHasta}/{mesHasta}/{anioHasta}")]
-        public async Task<IActionResult> GetRetirosByCliente(string diaDesde, string mesDesde, string anioDesde,
-                                                             string diaHasta, string mesHasta, string anioHasta,
-                                                             [FromBody] RetiroToHistorial retiroToHistorial)
-        {
-            IActionResult actionResult = BadRequest();
-
-            try
-            {
-                DateTime FechaDesde = DateTime.Parse($"{diaDesde}/{mesDesde}/{anioDesde}");
-                DateTime FechaHasta = DateTime.Parse($"{diaHasta}/{mesHasta}/{anioHasta}");
-
-                IEnumerable listadoRetiros = await _retirosRepo.GetRetirosAsync("", retiroToHistorial.CodigoComuna, FechaDesde, FechaHasta, retiroToHistorial.usuario, Cliente: retiroToHistorial.CodigoCliente);
-                actionResult = Ok(listadoRetiros);
-            }
-            catch (ConnectionException ConnEx)
-            {
-                actionResult = StatusCode(900, ConnEx.Message);
-            }
-            catch (CredentialsException CredEx)
-            {
-                actionResult = StatusCode(901, CredEx.Message);
-            }
-
-            return actionResult;
-        }
-
-        [HttpPost("GetDetalle/{NumeroRetiro:int}")]
-        public async Task<IActionResult> GetDetalle([FromBody] Usuario usuario, int NumeroRetiro)
-        {
-            IActionResult actionResult = BadRequest();
-
-            try
-            {
-                Retiro retiro = await _retirosRepo.GetDetalleAsync(NumeroRetiro, usuario);
-                actionResult = Ok(retiro);
-            }
-            catch (ConnectionException ConnEx)
-            {
-                actionResult = StatusCode(900, ConnEx.Message);
-            }
-            catch (CredentialsException CredEx)
-            {
-                actionResult = StatusCode(901, CredEx.Message);
-            }
-
-            return actionResult;
-        }
-
-        [HttpPost("ReporteSucursal/{dia}/{mes}/{anio}")]
-        public async Task<IActionResult> ReporteSucursal([FromBody] Usuario usuario, string dia, string mes, string anio)
-        {
-            IActionResult actionResult = BadRequest();
-
-            try
-            {
-                DateTime FechaSolicitud = DateTime.Parse($"{dia}/{mes}/{anio}");
-                IEnumerable<Retiro> retiros = await _retirosRepo.GetReporteSucursalesAsync(FechaSolicitud, usuario);
-                actionResult = Ok(retiros);
-            }
-            catch (ConnectionException ConnEx)
-            {
-                actionResult = StatusCode(900, ConnEx.Message);
-            }
-            catch (CredentialsException CredEx)
-            {
-                actionResult = StatusCode(901, CredEx.Message);
-            }
-
-            return actionResult;
-        }
-       
     }
 }

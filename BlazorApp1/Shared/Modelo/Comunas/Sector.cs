@@ -18,7 +18,7 @@ namespace BlazorApp1.Shared.Modelo.Comunas
     {
         private string nombre = string.Empty;
         private List<Comuna> comunas = new List<Comuna>();
-        private Dictionary<string,string> sucursales = new Dictionary<string,string>();
+        private Dictionary<string, string> sucursales = new Dictionary<string, string>();
 
         public string Nombre
         {
@@ -30,7 +30,7 @@ namespace BlazorApp1.Shared.Modelo.Comunas
             get { return comunas; }
             private set { comunas = value; }
         }
-        public Dictionary<string,string> Sucursales
+        public Dictionary<string, string> Sucursales
         {
             get { return sucursales; }
             private set { sucursales = value; }
@@ -42,11 +42,11 @@ namespace BlazorApp1.Shared.Modelo.Comunas
 
 
             Dictionary<string, string> dicComunas = Utilities.Comunas.GetComunasPorSector(NombreSector);
-            foreach (KeyValuePair<string,string> dicComuna in dicComunas)
+            foreach (KeyValuePair<string, string> dicComuna in dicComunas)
             {
                 Comuna comuna = new Comuna();
                 comuna.Nombre = dicComuna.Key;
-                comuna.CodigoPostal = dicComuna.Value;
+                comuna.CodigoPostal = int.Parse(dicComuna.Value);
                 Comunas.Add(comuna);
             }
         }
@@ -68,7 +68,7 @@ namespace BlazorApp1.Shared.Modelo.Comunas
         public static List<Sector> GetSectoresConSucursales()
         {
             List<Sector> list = new List<Sector>();
-            list.Add(new Sector(SectorName.Norte,false));
+            list.Add(new Sector(SectorName.Norte, false));
             list.Add(new Sector(SectorName.Sur, false));
             list.Add(new Sector(SectorName.Oriente, false));
             list.Add(new Sector(SectorName.Santiago, false));

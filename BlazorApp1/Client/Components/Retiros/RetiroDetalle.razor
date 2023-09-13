@@ -16,25 +16,25 @@
     </div>
     <div class="input-group mb-3">
         <span class="input-group-text">Comuna: </span>
-        <RadzenText Text="@RetiroObject.Comuna" class="form-control" />
+        <RadzenText Text="@RetiroObject.Comuna.Nombre" class="form-control" />
     </div>
     <div class="input-group mb-3">
         <span class="input-group-text">AM: </span>
         <RadzenDatePicker TimeOnly="true"
                           ShowTime="true"
                           DateFormat="HH:mm"
-                          @bind-Value="@RetiroObject.AmDesde"
+        @bind-Value="@RetiroObject.AmDesde"
                           ReadOnly="true"
                           class="form-control"
-                          Style="padding:0;"/>
+                          Style="padding:0;" />
         <span class="input-group-text"> - </span>
         <RadzenDatePicker TimeOnly="true"
                           ShowTime="true"
                           DateFormat="HH:mm"
-                          @bind-Value="@RetiroObject.AmHasta" 
-                          ReadOnly="true" 
-                          class="form-control" 
-                          Style="padding:0;"/>
+        @bind-Value="@RetiroObject.AmHasta"
+                          ReadOnly="true"
+                          class="form-control"
+                          Style="padding:0;" />
     </div>
     <div class="input-group mb-3">
         <span class="input-group-text">PM: </span>
@@ -42,23 +42,23 @@
                           ShowTime="true"
                           DateFormat="HH:mm"
                           Style="padding:0;"
-                          @bind-Value="@RetiroObject.PmDesde"
+        @bind-Value="@RetiroObject.PmDesde"
                           ReadOnly="true"
                           class="form-control" />
         <span class="input-group-text"> - </span>
         <RadzenDatePicker TimeOnly="true"
                           ShowTime="true"
                           DateFormat="HH:mm"
-                          @bind-Value="@RetiroObject.PmHasta"
+        @bind-Value="@RetiroObject.PmHasta"
                           ReadOnly="true"
                           class="form-control"
-                          Style="padding:0;"/>
+                          Style="padding:0;" />
     </div>
     <div class="input-group mb-3">
         <span class="input-group-text">Contacto: </span>
         <RadzenText Text="@RetiroObject.Contacto" class="form-control" />
     </div>
-    <div class="input-group mb-3">
+    <div class="input-group mb-3">  
         <span class="input-group-text">Telefono: </span>
         <RadzenText Text="@RetiroObject.Telefono" class="form-control" />
     </div>
@@ -68,7 +68,7 @@
     </div>
     <div class="input-group mb-3">
         <span class="input-group-text">Movil: </span>
-        <RadzenText Text="@RetiroObject.Movil" class="form-control" />
+        <RadzenText Text="@RetiroObject.Movil?.Codigo.ToString()" class="form-control" />
     </div>
 </RadzenCard>
 

@@ -10,25 +10,5 @@
 
 <OrdenesDeTrabajoManagement />
 @code {
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            user.GetCredentials();
-
-            try
-            {
-                listadoMovilesDisponibles.TipoMoviles = await MovilesRepo.GetMovilesDisponibles();
-            }
-            catch (ExceptionResponse exRes)
-            {
-                this.NotifyRepo.Notify(NotificationSeverity.Error, "Error!", exRes.Message);
-            }
-        }
-        catch
-        {
-            navigation.NavigateTo("/Configuracion");
-        }
-
-    }
+    
 }

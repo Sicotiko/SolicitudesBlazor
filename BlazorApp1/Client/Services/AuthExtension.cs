@@ -1,9 +1,10 @@
-﻿using BlazorApp1.Shared.User;
+﻿using BlazorApp1.Client.Services.Moviles;
+using BlazorApp1.Shared.Modelo.Moviles;
+using BlazorApp1.Shared.User;
 using Blazored.SessionStorage;
-using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using Microsoft.AspNetCore.Components.Authorization;
+using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -12,11 +13,13 @@ namespace BlazorApp1.Client.Services
     public class AuthExtension : AuthenticationStateProvider
     {
         private readonly ISessionStorageService _session;
+        private readonly MovilesService movilesService;
         private ClaimsPrincipal _principalVacio = new ClaimsPrincipal(new ClaimsIdentity());
 
-        public AuthExtension(ISessionStorageService sesion)
+        public AuthExtension(ISessionStorageService sesion, MovilesService movilesService)
         {
             _session = sesion;
+            this.movilesService = movilesService;
         }
         public async Task UpdateAuthorization(Sesion? sesion)
         {
@@ -32,6 +35,7 @@ namespace BlazorApp1.Client.Services
                 }, "JwtAuth"));
                 await _session.SaveStorage("sesion", sesion);
 
+                movilesService.SetMovilesDisponibles(JsonConvert.DeserializeObject<List<Movil>>(sesion.MovilesDisponibles));
             }
             else
             {
@@ -59,8 +63,9 @@ namespace BlazorApp1.Client.Services
             return await Task.FromResult(new AuthenticationState(claimsPrincipal));
 
             //new AuthenticationState(claimsPrincipal).User.Claims.ToList().First(cl => cl.Type == "MovilesDisponibles");
-            
+
 
         }
+
     }
 }

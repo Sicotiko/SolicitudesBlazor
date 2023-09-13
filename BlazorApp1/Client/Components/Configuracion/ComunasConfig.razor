@@ -1,0 +1,123 @@
+﻿@using BlazorApp1.Client.Services.Comunas;
+@using BlazorApp1.Shared.Modelo.Comunas;
+@using BlazorApp1.Shared.Utlilities;
+@inject ComunaService comunaService
+
+<RadzenCard>
+    <RadzenStack Orientation="Orientation.Horizontal">
+        <RadzenButton Text="Actualizar"
+                      Icon="update"
+                      Click="LoadComunas" />
+    </RadzenStack>
+</RadzenCard>
+
+<RadzenCard>
+    <RadzenDataGrid @ref="comunasGrid"
+                    TItem="Comuna"
+                    Data="Comunas"
+                    EditMode="DataGridEditMode.Single"
+                    RowUpdate="@OnUpdateRow"
+                    Sort="@Reset"
+                    Filter="@Reset"
+                    AllowAlternatingRows="true"
+                    AllowColumnResize="true"
+                    AllowFiltering="true"
+                    AllowSorting="true"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    FilterMode="FilterMode.Simple"
+                    LogicalFilterOperator="LogicalFilterOperator.And">
+        <Columns>
+            <RadzenDataGridColumn TItem="Comuna"
+                                  Title="Comuna"
+                                  Property="Nombre" />
+            <RadzenDataGridColumn TItem="Comuna"
+                                  Title="Codigo Postal"
+                                  Property="CodigoPostal">
+                <EditTemplate Context="data">
+                    <RadzenNumeric @bind-Value="@data.CodigoPostal"
+                                   ShowUpDown="false"
+                                   TValue="int" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Comuna"
+                                  Title="Codigo Postal Maximo"
+                                  Property="CodigoPostalMax">
+                <EditTemplate Context="data">
+                    <RadzenNumeric @bind-Value="@data.CodigoPostalMax"
+                                   ShowUpDown="false"
+                                   TValue="int" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Comuna"
+                                  Title="Sector"
+                                  Property="NombreSector">
+                <Template Context="data">
+                    @(((NombreSector)data.NombreSector).GetEnumDescription())
+                </Template>
+                <EditTemplate Context="data">
+                    <RadzenDropDown @bind-Value="data.NombreSector"
+                                    TValue="NombreSector"
+                                    Data="Enum.GetValues(typeof(NombreSector))">
+                        <Template Context="drpdata">
+                            @(((NombreSector)drpdata).GetEnumDescription())
+                        </Template>
+                    </RadzenDropDown>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Comuna"
+                                  Title="Acciones">
+                <Template Context="data">
+                    <RadzenButton Icon="edit"
+                                  ButtonStyle="ButtonStyle.Dark"
+                                  Variant="Variant.Flat"
+                                  Size="ButtonSize.Medium"
+                                  Click="@(args => EditRow(data))"
+                    @onclick:stopPropagation="true" />
+                </Template>
+                <EditTemplate Context="data">
+                    <RadzenButton Icon="check"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Variant="Variant.Flat"
+                                  Size="ButtonSize.Medium"
+                                  Click="@((args) => SaveRow(data))" />
+                    <RadzenButton Icon="close"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Variant="Variant.Flat"
+                                  Size="ButtonSize.Medium"
+                                  Click="@((args) => CancelEdit(data))" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    IEnumerable<Comuna> Comunas;
+    RadzenDataGrid<Comuna> comunasGrid;
+
+    Comuna comunaToUpdate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadComunas();
+    }
+    private async Task LoadComunas() => Comunas = await comunaService.GetComunas();
+
+    private void Reset() => comunaToUpdate = null;
+    public void OnUpdateRow(Comuna comuna) => Reset();
+    private async Task SaveRow(Comuna comuna) => await comunasGrid.UpdateRow(comuna);
+
+    private async Task EditRow(Comuna comuna)
+    {
+        comunaToUpdate = comuna;
+        await comunasGrid.EditRow(comuna);
+    }
+    private void CancelEdit(Comuna comuna)
+    {
+        Reset();
+        comunasGrid.CancelEditRow(comuna);
+    }
+
+}

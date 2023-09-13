@@ -1,12 +1,15 @@
 ﻿@page "/index"
+@using BlazorApp1.Shared.Modelo.Moviles;
+@using Newtonsoft.Json;
 @inject MovilesService Movilesrepo
+
 <RadzenCard>
-    <RadzenText TextStyle="TextStyle.DisplayH3" Text="Hola Radios!"/>
+    <RadzenText TextStyle="TextStyle.DisplayH3" Text="Hola Radios!" />
 </RadzenCard>
 
-<br/>
+<br />
 <RadzenCard>
-        <RadzenText TextStyle="TextStyle.DisplayH5" Text="Recuerda primero ingresar tus credenciales en Configuracion, luego se desbloquearan los otros menu's a la izquierda."/>
+    <RadzenText TextStyle="TextStyle.DisplayH5" Text="Recuerda primero ingresar tus credenciales en Configuracion, luego se desbloquearan los otros menu's a la izquierda." />
 </RadzenCard>
 
 @*<BlazorApp1.Client.Components.PruebasComponent />*@
@@ -21,7 +24,13 @@
 
 @*<RadzenButton Text="ClickMEEE!" Click="@OnClick"/>*@
 
-@code{
+@code {
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        // Console.WriteLine(JsonConvert.SerializeObject(Movilesrepo.MovilesDisponibles));
+    }
+
     private async Task OnClick()
     {
         var list = await Movilesrepo.GetMovilesDisponibles();

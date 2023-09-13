@@ -1,11 +1,15 @@
 using BlazorApp1.Client.Components.Loading;
 using BlazorApp1.Client.Services;
+using BlazorApp1.Client.Services.ClienteWeb;
+using BlazorApp1.Client.Services.Comunas;
 using BlazorApp1.Client.Services.Dialogs;
 using BlazorApp1.Client.Services.Login;
 using BlazorApp1.Client.Services.Moviles;
 using BlazorApp1.Client.Services.Notifications;
 using BlazorApp1.Client.Services.OT;
 using BlazorApp1.Client.Services.Retiros;
+using BlazorApp1.Client.Utilities;
+using BlazorApp1.Shared.Modelo.Moviles;
 using BlazorApp1.Shared.User;
 using BlazorApp1.Shared.ViewModel;
 using Blazored.LocalStorage;
@@ -15,6 +19,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -32,6 +37,12 @@ namespace BlazorApp1.Client
             builder.Services.AddScoped<LoadingScreen>();
 
             builder.Services.AddBlazoredSessionStorageAsSingleton();
+            builder.Services.AddScoped<Usuario>();
+            builder.Services.AddScoped<ListadoTipoMovil>();
+            builder.Services.AddScoped<RetirosService>();
+            builder.Services.AddScoped<OrdenesService>();
+            builder.Services.AddScoped<MovilesService>();
+            builder.Services.AddScoped<ComunaService>();
             builder.Services.AddScoped<AuthenticationStateProvider, AuthExtension>();
             builder.Services.AddAuthorizationCore();
             builder.Services.AddScoped<LoginService>();
@@ -40,9 +51,7 @@ namespace BlazorApp1.Client
             builder.Services.AddScoped<IRetirosRepoService, RetirosRepoService>();
             builder.Services.AddScoped<IOrdenTrabajoRepoService, OrdenTrabajoRepoService>();
             //builder.Services.AddScoped<IUsuario, Usuario>();
-            builder.Services.AddScoped<Usuario>();
-            builder.Services.AddScoped<ListadoTipoMovil>();
-            builder.Services.AddScoped<MovilesService>();
+
 
             //DEBUG
             //builder.Services.AddScoped<PruebasServices>();
@@ -55,6 +64,7 @@ namespace BlazorApp1.Client
             //builder.Services.AddScoped<LoadingDialog>();
             builder.Services.AddScoped<INoteService, NoteService>();
             builder.Services.AddScoped<IDialogFrameService, DialogFrameService>();
+            builder.Services.AddScoped<IClipboardService, ClipboardService>();
 
 
             await builder.Build().RunAsync();

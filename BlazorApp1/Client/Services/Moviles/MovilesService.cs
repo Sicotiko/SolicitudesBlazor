@@ -12,6 +12,7 @@ namespace BlazorApp1.Client.Services.Moviles
     {
         private readonly HttpClient _httpClient;
         private readonly Usuario _usuario;
+        public List<Movil> MovilesDisponibles { get; private set; } = new List<Movil>();
 
         public MovilesService(HttpClient httpClient, Usuario usuario)
         {
@@ -26,6 +27,10 @@ namespace BlazorApp1.Client.Services.Moviles
                 return await response.Content.ReadFromJsonAsync<List<TipoMovil>>();
             else
                 throw new ExceptionResponse(await response.Content.ReadAsStringAsync());
+        }
+        public void SetMovilesDisponibles(List<Movil> Moviles)
+        {
+            MovilesDisponibles = Moviles;
         }
     }
 }

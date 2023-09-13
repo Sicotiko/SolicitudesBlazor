@@ -53,7 +53,7 @@
                                  Style="font-weight:800;font-size:1.2rem">
                     <RadzenPanelMenuItem Text="Inicio"
                                          Icon="home"
-                                         Path="/Index" />
+                                         Path="Index" />
                     <RadzenPanelMenuItem Text="Asignación"
                                          Icon="assignment_add"
                                          Path="Asignacion" />
@@ -64,20 +64,28 @@
                                          Icon="summarize"
                                          Path="SucursalReport" />
                     <RadzenPanelMenuItem Text="Ordenes Trabajo"
-                                         Icon="order_play"
+                                         Icon="summarize"
                                          Path="Ordenes" />
                     <RadzenPanelMenuItem Text="Historial Fallidos"
                                          Icon="timeline"
                                          Path="Fallidos" />
 
-                    @if (context.User.IsInRole("Super"))
+                    @* @if (context.User.IsInRole("Super"))
                     {
-                        <RadzenPanelMenuItem Text="Configuracion"
+
+                    } *@
+
+                    <AuthorizeView Context="data"
+                                   Roles="Super">
+                        <RadzenPanelMenuItem Text="Configuraciones"
                                              Icon="settings"
-                                             Path="Configuracion" />
-                    }
+                                             Path="Configuracion">
+                            <RadzenPanelMenuItem Text="Comunas"
+                                                 Icon="location_city"
+                                                 Path="ComunasEdit" />
 
-
+                        </RadzenPanelMenuItem>
+                    </AuthorizeView>
 
 
                 </RadzenPanelMenu>

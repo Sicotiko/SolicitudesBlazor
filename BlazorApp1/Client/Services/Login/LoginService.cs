@@ -1,6 +1,12 @@
 ﻿using BlazorApp1.Client.Components.Loading;
 using BlazorApp1.Client.Services.Notifications;
+using BlazorApp1.Shared.Modelo.Moviles;
+using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using Microsoft.AspNetCore.Components.Authorization;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -37,7 +43,7 @@ namespace BlazorApp1.Client.Services.Login
             else
             {
                 var stringResponse = await loginResponse.Content.ReadAsStringAsync();
-                _noteService.NotifyBase("Error",stringResponse,Radzen.NotificationSeverity.Error);
+                _noteService.NotifyBase("Error", stringResponse, Radzen.NotificationSeverity.Error);
             }
             _loadingScreen.Close();
             return false;
@@ -47,6 +53,25 @@ namespace BlazorApp1.Client.Services.Login
             var authentication = (AuthExtension)authProvider;
             await authentication.UpdateAuthorization(null);
             this.httpClient.DefaultRequestHeaders.Authorization = null;
+        }
+
+        public async Task<List<Movil>> GetMovilesDisponibles()
+        {
+            List<Movil> moviles = new List<Movil>();
+            try
+            {
+
+                var authentication = (AuthExtension)authProvider;
+                var authState = await authentication.GetAuthenticationStateAsync();
+                var claims = authState.User;
+
+                moviles = JsonConvert.DeserializeObject<List<Movil>>(claims.Claims.First(c => c.Type == "MovilesDisponibles").Value);
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.Message);
+            }
+            return moviles;
         }
     }
 }

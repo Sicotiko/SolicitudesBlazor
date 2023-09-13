@@ -1,18 +1,18 @@
-using BlazorApp1.Server.Controllers.OT;
-using BlazorApp1.Server.Controllers.Retiros;
+using BlazorApp1.Server.Data;
+using BlazorApp1.Server.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Linq;
 
 namespace BlazorApp1.Server
 {
     public class Startup
     {
+        private string connString = "ConnectionStrings:db2";
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -27,8 +27,29 @@ namespace BlazorApp1.Server
 
             services.AddControllersWithViews();
             services.AddRazorPages();
-            services.AddScoped<IRetirosRepo, RetirosRepo>();
-            services.AddScoped<IOrdenTrabajoRepo, OrdenTrabajoRepo>();
+
+            services.AddHttpContextAccessor();
+            services.AddScoped<ListadoOrdenes>();
+            services.AddScoped<ServiceClient>();
+            services.AddScoped<ServiceMovil>();
+            services.AddScoped<ServiceOrdenTrabajo>();
+            services.AddScoped<ServiceRetiro>();
+            services.AddScoped<ServiceComuna>();
+
+            services.AddDbContextFactory<Context>(options =>
+            {
+                //options.UseLazyLoadingProxies();
+                //Comentar siguiente linea en produccion
+                //options.EnableSensitiveDataLogging();
+                options.UseSqlServer(Configuration[connString], options =>
+                {
+                    options.EnableRetryOnFailure();
+
+                });
+
+
+            });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -38,12 +59,15 @@ namespace BlazorApp1.Server
             {
                 app.UseDeveloperExceptionPage();
                 app.UseWebAssemblyDebugging();
+                connString = "ConnectionStrings:db2";
             }
             else
             {
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
+                connString = "ConnectionStrings:db";
+
             }
 
             app.UseHttpsRedirection();

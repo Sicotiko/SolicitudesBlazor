@@ -1,18 +1,20 @@
-﻿@using BlazorApp1.Client.Services.Dialogs
+﻿@using BlazorApp1.Client.Services.Comunas;
+@using BlazorApp1.Client.Services.Dialogs
 @using BlazorApp1.Client.Services.Notifications
 @using BlazorApp1.Shared.Excepciones
 @using BlazorApp1.Shared.Modelo.Comunas
 @using BlazorApp1.Shared.Modelo.Retiros
 @using BlazorApp1.Shared.Utilities
+@using BlazorApp1.Shared.Utlilities;
 @using BlazorApp1.Shared.ViewModel
-@inject IRetirosRepoService RetirosRepo
-@inject IOrdenTrabajoRepoService OrdenesRepo
 @inject INoteService Note
 @inject IDialogFrameService dialog
 @inject LoadingScreen LoadScreen
-@inject ListadoTipoMovil ListadoMovilesDisponibles
 @inject NotificationService NotificationRepo
 
+@inject RetirosService retirosService
+@inject MovilesService movilesService
+@inject ComunaService comunaService
 
 <RadzenCard>
     <RadzenText TextStyle="TextStyle.DisplayH3" Text="Auto asignacion de Courier y Valijas:" />
@@ -24,8 +26,13 @@
         <div class="col-lg-6 col-xl-4 p-3">
             <RadzenCard>
                 <RadzenText Text="Sector" />
-                <RadzenDropDown Data="@(Enum.GetValues(typeof(SectorName)).Cast<Enum>())"
-                                @bind-Value="sectorName" />
+                <RadzenDropDown @bind-Value="sectorName"
+                                TValue="NombreSector"
+                                Data="Enum.GetValues(typeof(NombreSector))">
+                    <Template Context="data">
+                        @(((NombreSector)data).GetEnumDescription())
+                    </Template>
+                </RadzenDropDown>
             </RadzenCard>
         </div>
         <div class="col-lg-6 col-xl-4 p-3">
@@ -44,15 +51,18 @@
                               Text="Asignar Seleccionados"
                               Click="ConfirmToAssign"
                               Disabled="GridLoading" />
+                <RadzenButton Text="Actualizar"
+                              Disabled="true"
+                              Click="@gridActual.Reload" />
             </RadzenCard>
         </div>
     </div>
 </div>
 @*<RadzenCard>*@
-<RadzenText Text=@($"Retiros a Asignar ({RetirosActual.Count()}) Retiros Pendientes") />
+<RadzenText Text=@CantidadRetirosString />
 <RadzenDataGrid TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
-                Data="RetirosActual"
-                @ref="gridActual"
+                Data="RetirosActual.AsEnumerable()"
+@ref="gridActual"
                 AllowPaging="true"
                 PageSize="50"
                 AllowAlternatingRows="true"
@@ -70,7 +80,7 @@
                               Title="Asignar?"
                               Filterable="false"
                               Sortable="false"
-                              Width="20">
+                              Width="60px">
             <Template Context="retiro">
                 <RadzenCheckBox @bind-Value="retiro.Asignar" />
             </Template>
@@ -78,35 +88,47 @@
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="CodigoRetiro"
                               Title="N° Retiro"
-                              Width="50">
+                              Width="130px">
             <Template Context="retiro">
-                <RadzenButton Text="@retiro.CodigoRetiro"
+                <RadzenButton Text="@retiro.CodigoRetiro.ToString()"
                               Click="@(args => OpenDetail(retiro))" />
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Nombre"
                               Title="Nombre"
-                              Width="200" />
+                              Width="200px" />
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="CodigoCliente"
                               Title="N° Cliente"
-                              Width="100" />
+                              Width="117px" />
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Direccion"
                               Title="Direccion"
-                              Width="250" />
+                              Width="250px" />
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
-                              Property="Comuna"
+                              Property="Comuna.Nombre"
                               Title="Comuna"
-                              Width="100" />
+                              Width="100px" />
         <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.Retiros.Retiro"
                               Property="Movil"
                               Title="Movil"
-                              Width="30">
+                              FilterProperty="Movil.Codigo"
+                              FilterOperator="FilterOperator.Equals"
+                              Width="220px">
             <Template Context="retiro">
-                <RadzenTextBox @bind-Value="retiro.Movil"
-                               MaxLength="6" />
+                <RadzenDropDown @bind-Value="retiro.Movil"
+                                TValue="BlazorApp1.Shared.Modelo.Moviles.Movil"
+                                Data="movilesService.MovilesDisponibles"
+                                AllowClear="true"
+                                TextProperty="Codigo"
+                                AllowFiltering="true"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                FilterOperator="StringFilterOperator.Contains">
+                    <Template Context="movil">
+                        @($"{(movil as BlazorApp1.Shared.Modelo.Moviles.Movil).Codigo} || {(movil as BlazorApp1.Shared.Modelo.Moviles.Movil).Nombre}")
+                    </Template>
+                </RadzenDropDown>
             </Template>
         </RadzenDataGridColumn>
 
@@ -117,39 +139,16 @@
 @code {
     List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosOrigen = new List<Retiro>();
     List<BlazorApp1.Shared.Modelo.Retiros.Retiro> RetirosActual = new List<Retiro>();
-    SectorName sectorName;
-    DateTime FechaOrigen = DateTime.Now;
-    DateTime FechaActual = DateTime.Now;
+    private NombreSector sectorName;
+    DateTime FechaOrigen = DateTime.Now.Date;
+    DateTime FechaActual = DateTime.Now.Date;
     //RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridOrigen;
     RadzenDataGrid<BlazorApp1.Shared.Modelo.Retiros.Retiro> gridActual;
     bool GridLoading = false;
     int asignados = 0;
     bool asignar = true;
+    private string CantidadRetirosString = "Retiros a Asignar (0) Retiros Pendientes";
 
-
-    protected override void OnInitialized()
-    {
-        //dialog.OnOpen += Open;
-        //dialog.OnClose += Close;
-    }
-
-    public void Dispose()
-    {
-
-        //dialog.OnOpen -= Open;
-        //dialog.OnClose -= Close;
-    }
-    void Open(string title, Type type, Dictionary<string, object> parameters, DialogOptions options)
-    {
-    }
-
-    void Close(dynamic result)
-    {
-        //if (result != null)
-        //    if (asignar)
-        //        if ((bool)result)
-        //            await Asignacion();
-    }
 
 
     private async Task PoblarRetirosOrigen()
@@ -157,17 +156,31 @@
         //await BusyDialog("Leyendo retiros anteriores");
 
         RetirosOrigen = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
-        var comunas = Comunas.GetComunasPorSector(sectorName);
+        List<Task> tasks = new List<Task>();
+        var oComunas = await comunaService.GetComunasPorSector(sectorName);
+        FiltroBusquedaRetiros filtro = new FiltroBusquedaRetiros
+            {
+                Estado = Estado.Todos,
+                FechaDesde = FechaOrigen,
+                Hasta = FechaOrigen,
+            };
+        // var comunas = Comunas.GetComunasPorSector(sectorName);
         for (int i = 0; i < 2; i++)
         {
-            string TipoRetiro = i == 0 ? "COURIER" : "VALIJA";
-            foreach (var comuna in comunas)
+            filtro.TipoEntrada = i == 0 ? TipoEntrada.COURIER : TipoEntrada.VALIJA;
+            foreach (var comuna in oComunas)
             {
-                IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosTodosLosEstados(TipoRetiro, comuna.Value, FechaOrigen, FechaOrigen);
-                RetirosOrigen.AddRange(retiros);
+                // IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosTodosLosEstados(TipoRetiro, comuna.CodigoPostal, FechaOrigen, FechaOrigen);
+                // RetirosOrigen.AddRange(retiros);
+                filtro.Poblacion = comuna.CodigoPostal;
+                tasks.Add(AddRetirosOrigenAsync(filtro));
+
+                // var newList = await retirosService.GetRetirosAsync(filtro);
+                // RetirosActual.AddRange(newList);
             }
             //Ordenar por algun campo el listado
         }
+        await Task.WhenAll(tasks);
         //await gridOrigen.Reload();
     }
     private async Task PoblarRetirosActuales()
@@ -175,24 +188,48 @@
         //await BusyDialog("Leyendo retiros pendientes");
 
         RetirosActual = new List<BlazorApp1.Shared.Modelo.Retiros.Retiro>();
-        var comunas = Comunas.GetComunasPorSector(sectorName);
+        List<Task> tasks = new List<Task>();
+        var oComunas = await comunaService.GetComunasPorSector(sectorName);
+        // var comunas = Comunas.GetComunasPorSector(sectorName);
+
+        FiltroBusquedaRetiros filtro = new FiltroBusquedaRetiros
+            {
+                Estado = Estado.PEND,
+                FechaDesde = FechaActual,
+                Hasta = FechaActual,
+            };
         for (int i = 0; i < 2; i++)
         {
-            string TipoRetiro = i == 0 ? "COURIER" : "VALIJA";
-            foreach (var comuna in comunas)
+            filtro.TipoEntrada = i == 0 ? TipoEntrada.COURIER : TipoEntrada.VALIJA;
+            foreach (var comuna in oComunas)
             {
-                //DEBUG
-                IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosPendientes(TipoRetiro, comuna.Value, FechaActual, FechaActual);
-                //IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosPendientes("FICHERO", comuna.Value, FechaActual, FechaActual);
+                // //DEBUG
+                // IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosPendientes(TipoRetiro, comuna.CodigoPostal, FechaActual, FechaActual);
+                // //IEnumerable<BlazorApp1.Shared.Modelo.Retiros.Retiro> retiros = await RetirosRepo.GetRetirosPendientes("FICHERO", comuna.Value, FechaActual, FechaActual);
 
-                RetirosActual.AddRange(retiros);
+                // RetirosActual.AddRange(retiros);
+                filtro.Poblacion = comuna.CodigoPostal;
+                tasks.Add(AddRetirosActualesAsync(filtro));
+                // var newList = await retirosService.GetRetirosAsync(filtro);
+                // RetirosActual.AddRange(newList);
+
             }
             //Ordenar por algun campo el listado
         }
+        await Task.WhenAll(tasks);
         await gridActual.Reload();
 
     }
-
+    private async Task AddRetirosActualesAsync(FiltroBusquedaRetiros filtro)
+    {
+        var newList = await retirosService.GetRetirosAsync(filtro);
+        RetirosActual.AddRange(newList);
+    }
+    private async Task AddRetirosOrigenAsync(FiltroBusquedaRetiros filtro)
+    {
+        var newList = await retirosService.GetRetirosAsync(filtro);
+        RetirosOrigen.AddRange(newList);
+    }
     private async Task MezclaRetiros()
     {
 
@@ -204,7 +241,7 @@
 
         foreach (var retiro in RetirosActual)
         {
-            retiro.Movil = ""; // limpieza de movil asignado por sector por defecto
+            retiro.Movil = null; // limpieza de movil asignado por sector por defecto
             var retiroToMix = RetirosOrigen.FirstOrDefault(r => r.Nombre == retiro.Nombre &&
                                                                 r.Direccion == retiro.Direccion &&
                                                                 r.Contacto == retiro.Contacto &&
@@ -217,34 +254,14 @@
                 continue;
             else
             {
-                retiro.Movil = retiroToMix.Movil;
+                if (retiroToMix.Movil == null)
+                    continue;
+                retiro.Movil = movilesService.MovilesDisponibles.FirstOrDefault(m => m.Codigo == retiroToMix.Movil?.Codigo);
             }
 
         }
         //await gridOrigen.Reload();
         await gridActual.Reload();
-    }
-    private async Task ObtenerOrdenTrabajo(Retiro retiro)
-    {
-        //await BusyDialog("Asignando N° de OT");
-
-
-        var ote = OrdenesRepo.Ordenes.FirstOrDefault(ot => ot.Tipo == retiro.TipoRetiro &&
-                                                           ot.Movil == retiro.Movil &&
-                                                           ot.Fecha == DateTime.Today &&
-                                                           ot.Estado != "CERRADA" &&
-                                                           ot.Repartos == 0);
-
-        if (ote == null)
-        {
-            ote = await OrdenesRepo.CreateOrden(int.Parse(retiro.Movil));
-            ote.Tipo = retiro.TipoRetiro;
-            ote.SectorName = sectorName;
-            ote.Comuna = retiro.Comuna;
-            OrdenesRepo.Ordenes.Add(ote);
-        }
-
-        retiro.Ot = ote.Numero;
     }
 
     private async Task Preparacion()
@@ -281,11 +298,14 @@
 
         await gridActual.Reload();
         GridLoading = false;
+        CantidadRetirosString = $"Retiros a Asignar ({RetirosActual.Count()}) Retiros Pendientes";
+        LoadScreen.Close();
     }
     private async Task Asignacion()
     {
 
         //BusyDialog();
+        // List<Task> tasks = new List<Task>();
         LoadScreen.Show("Cargando...");
         asignados = 0;
         if (RetirosActual == null || RetirosOrigen == null)
@@ -293,30 +313,33 @@
         else
             foreach (var retiro in RetirosActual.Where(r => r.Asignar == true))
             {
-                if (retiro.Movil == "")
+                if (retiro.Movil == null)
                     continue;
-                if (ListadoMovilesDisponibles.TipoMoviles.FirstOrDefault(tp => tp.Codigo.Contains(retiro.Movil)) == null)
-                {
-                    NotificationRepo.Notify(NotificationSeverity.Error,"MOVIL NO DISPONIBLE",$"El movil {retiro.Movil} no esta disponible en alertran",15000);
-                    continue;
-                }
+                // if (movilesService.MovilesDisponibles.FirstOrDefault(tp => tp.Codigo.Contains(retiro.Movil)) == null)
+                // {
+                //     NotificationRepo.Notify(NotificationSeverity.Error, "MOVIL NO DISPONIBLE", $"El movil {retiro.Movil} no esta disponible en alertran", 15000);
+                //     continue;
+                // }
                 try
                 {
-                    await ObtenerOrdenTrabajo(retiro);
-
-                    await RetirosRepo.AsignarAsync(retiro);
+                    // tasks.Add(retirosService.AsignarAsync(retiro));
+                    await retirosService.AsignarAsync(retiro);
+                    asignados++;
 
                     //this.RetirosActual.Remove(retiro);
-                }catch(ExceptionResponse exres)
+                }
+                catch (ExceptionResponse exres)
                 {
                     Note.NotifyResponse(exres);
-                }catch(NullReferenceException nullex)
+                }
+                catch (NullReferenceException nullex)
                 {
                     Note.NotifyNull(nullex);
                 }
 
-                asignados++;
             }
+
+        // await Task.WhenAll(tasks);
         LoadScreen.Close();
         ConfirmFinishedWork();
 
@@ -337,7 +360,7 @@
     async void ConfirmFinishedWork()
     {
         asignar = false;
-        await dialog.OpenAlertDialogAsync($"{asignados} Retiros asignados","Completo");
+        await dialog.OpenAlertDialogAsync($"{asignados} Retiros asignados", "Completo");
         asignar = true;
     }
 }

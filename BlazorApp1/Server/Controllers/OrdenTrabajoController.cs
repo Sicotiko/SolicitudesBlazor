@@ -1,32 +1,35 @@
-﻿using BlazorApp1.Server.Controllers.OT;
-using BlazorApp1.Shared.ControllerModel;
+﻿using BlazorApp1.Server.Services;
 using BlazorApp1.Shared.Excepciones;
-using BlazorApp1.Shared.User;
-using Microsoft.AspNetCore.Http;
+using BlazorApp1.Shared.Modelo.OT;
 using Microsoft.AspNetCore.Mvc;
-using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlazorApp1.Server.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class OrdenTrabajoController : ControllerBase
     {
-        private readonly IOrdenTrabajoRepo ordenTrabajoRepo;
+        private readonly ServiceOrdenTrabajo serviceOrdenTrabajo;
+        private readonly ListadoOrdenes ordenes;
 
-        public OrdenTrabajoController(IOrdenTrabajoRepo ordenTrabajoRepo)
+        public OrdenTrabajoController(ServiceOrdenTrabajo serviceOrdenTrabajo, ListadoOrdenes ordenes)
         {
-            this.ordenTrabajoRepo = ordenTrabajoRepo;
+            this.serviceOrdenTrabajo = serviceOrdenTrabajo;
+            this.ordenes = ordenes;
         }
 
-        [HttpPost("Crear/{Movil:int}")]
-        public async Task<IActionResult> Crear(int Movil, [FromBody] Usuario usuario)
+        [HttpPost("Crear")]
+        public async Task<IActionResult> Crear([FromBody] OrdenViewModel ordenViewModel)
         {
             IActionResult actionResult = BadRequest();
             try
             {
-                actionResult = Ok(await ordenTrabajoRepo.CreateOrden(Movil, usuario));
+                var orden = await serviceOrdenTrabajo.CreateOrdenTrabajoAsync(ordenViewModel);
+                //ordenes.AddOrden(orden);
+                actionResult = Ok(orden);
             }
             catch (ConnectionException ConnEx)
             {
@@ -41,12 +44,15 @@ namespace BlazorApp1.Server.Controllers
         }
 
         [HttpPost("Cerrar")]
-        public async Task<IActionResult> Cerrar([FromBody] OrdenToClose ordenToClose)
+        public async Task<IActionResult> Cerrar([FromBody] OrdenViewModel ordenViewModel)
         {
             IActionResult actionResult = BadRequest();
             try
             {
-                actionResult = Ok(await ordenTrabajoRepo.CloseOrden(ordenToClose.ordenTrabajo, ordenToClose.usuario));
+                var okResult = await serviceOrdenTrabajo.CerrarOrdenAsync(ordenViewModel);
+                //if (okResult)
+                //    ordenes.DeleteOrden(ordenViewModel.OrdenDeTrabajo);
+                actionResult = Ok(okResult);
             }
             catch (ConnectionException ConnEx)
             {
@@ -60,18 +66,14 @@ namespace BlazorApp1.Server.Controllers
             return actionResult;
         }
 
-        [HttpPost("Get/{Movil:int}/{Estado}/{DiaDesde:int}/{MesDesde:int}/{AnioDesde:int}/{DiaHasta:int}/{MesHasta:int}/{AnioHasta:int}")]
-        public async Task<IActionResult> Traer(int Movil, string Estado, int DiaDesde, int MesDesde, int AnioDesde,
-                                               int DiaHasta, int MesHasta, int AnioHasta, [FromBody] Usuario usuario)
+        [HttpPost("Get")]
+        public async Task<IActionResult> Traer([FromBody] FiltroBusquedaOrdenTrabajo filtro)
         {
             IActionResult actionResult = BadRequest();
-            DateTime Desde = DateTime.Parse($"{DiaDesde:00}/{MesDesde:00}/{AnioDesde}");
-            DateTime Hasta = DateTime.Parse($"{DiaHasta:00}/{MesHasta:00}/{AnioHasta}");
 
             try
             {
-                Estado = Estado.Replace("_", " ");
-                actionResult = Ok(await ordenTrabajoRepo.GetOrdenes(Movil, $"{Estado}", Desde, Hasta, usuario));
+                actionResult = Ok(await serviceOrdenTrabajo.GetOrdenesAsync(filtro));
             }
             catch (ConnectionException ConnEx)
             {
@@ -85,11 +87,59 @@ namespace BlazorApp1.Server.Controllers
 
             return actionResult;
         }
+        [HttpPost("GetLocal")]
+        public async Task<IActionResult> GetOrdenesLocal([FromBody] FiltroBusquedaOrdenTrabajo filtro)
+        {
+            IActionResult actionResult = BadRequest();
 
-        //[HttpPost("ExportXLS")]
-        //public async Task<IActionResult> Export([FromBody] List<Shared.Modelo.OT.OrdenTrabajo> Ordenes)
-        //{
+            try
+            {
+                filtro.FechaDesde = filtro.FechaDesde.Date.ToUniversalTime();
+                filtro.FechaHasta = filtro.FechaHasta.Date.ToUniversalTime();
+                List<OrdenTrabajo> ordenTrabajos = new List<OrdenTrabajo>();
+                await Task.Run(async () =>
+                {
+                    //var ss = ordenes.GetOrdenes();
+                    ordenTrabajos = await serviceOrdenTrabajo.GetOrdenesAsync(filtro.FechaDesde, filtro.FechaHasta);
+                });
 
-        //}
+
+                actionResult = Ok(ordenTrabajos);
+            }
+            catch (ConnectionException ConnEx)
+            {
+                actionResult = StatusCode(900, ConnEx.Message);
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = StatusCode(901, CredEx.Message);
+            }
+
+
+            return actionResult;
+        }
+        [HttpPost("BorrarLocal")]
+        public async Task<IActionResult> BorrarOrdenesLocal(OrdenTrabajo orden)
+        {
+            IActionResult actionResult = BadRequest();
+
+            try
+            {
+                await Task.Run(() => { ordenes.DeleteOrden(orden); });
+                actionResult = Ok();
+            }
+            catch (ConnectionException ConnEx)
+            {
+                actionResult = StatusCode(900, ConnEx.Message);
+            }
+            catch (CredentialsException CredEx)
+            {
+                actionResult = StatusCode(901, CredEx.Message);
+            }
+
+
+            return actionResult;
+        }
     }
 }
+

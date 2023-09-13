@@ -46,13 +46,13 @@ namespace BlazorApp1.Client.Services
 
 
                     //Movil
-                    Hoja.Cell(filaActual, 1 + ColumnaActual).Value = Ordenes[fila - 1].Movil;
+                    Hoja.Cell(filaActual, 1 + ColumnaActual).Value = new string(Ordenes[fila - 1].Movil.Codigo.ToString().Reverse().Take(3).Reverse().ToArray());
                     //AM
-                    Hoja.Cell(filaActual, 2 + ColumnaActual).Value = Ordenes[fila - 1].Tipo == "AM" ? Ordenes[fila].Numero : "";
+                    Hoja.Cell(filaActual, 2 + ColumnaActual).Value = Ordenes[fila - 1].TipoHorario.ToString();
                     //PM
-                    Hoja.Cell(filaActual, 3 + ColumnaActual).Value = Ordenes[fila - 1].Tipo == "PM" ? Ordenes[fila].Numero : "";
+                    Hoja.Cell(filaActual, 3 + ColumnaActual).Value = Ordenes[fila - 1].TipoHorario.ToString();
                     //Comuna
-                    Hoja.Cell(filaActual, 4 + ColumnaActual).Value = Ordenes[fila - 1].Comuna;
+                    Hoja.Cell(filaActual, 4 + ColumnaActual).Value = Ordenes[fila - 1].Comuna?.Nombre;
 
                     filaActual++;
                     ColumnaActual = filaActual == QPorPaginas ? ColumnaActual + AnchoEnColumnas : ColumnaActual;

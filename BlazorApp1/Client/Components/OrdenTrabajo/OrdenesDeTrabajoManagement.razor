@@ -2,58 +2,64 @@
 @using BlazorApp1.Client.Services.Notifications
 @using BlazorApp1.Client.Services.OT
 @using BlazorApp1.Shared.Excepciones
-@inject IOrdenTrabajoRepoService OTRepo
+@using BlazorApp1.Shared.Modelo.OT;
 @inject INoteService note
 @inject IDialogFrameService dialog
 @inject LoadingScreen loading
 @inject IJSRuntime Js
+
+@inject OrdenesService ordenesService
 
 <div class="row">
     <div class="col">
         <RadzenCard>
             <div class="input-group">
                 <span class="input-group-text">Fecha Desde</span>
-                <RadzenDatePicker DateFormat="d" @bind-Value="FechaDesde" />
+                <RadzenDatePicker @bind-Value="filtro.FechaDesde"
+                                  DateFormat="d" />
             </div>
             <div class="input-group">
                 <span class="input-group-text">Fecha Hasta</span>
-                <RadzenDatePicker DateFormat="d" @bind-Value="FechaHasta" />
+                <RadzenDatePicker @bind-Value="filtro.FechaHasta"
+                                  DateFormat="d" />
             </div>
+            <RadzenText Text=@("Por el cambio horario, debes seleccionar la fecha \"Hasta\" para mañana.") />
             <RadzenButton Text="Actualizar" Click="Update" />
         </RadzenCard>
     </div>
     <div class="col">
         <RadzenCard>
-            <RadzenButton Text="Cierre Automatico" Click="AutoClose" />
+            <RadzenButton Text="Cierre Automatico"
+                          Click="AutoClose" />
 
             <RadzenButton Text="Exportar"
-                          Click="@Exportar"/>
+                          Disabled="true"
+                          Click="@Exportar" />
         </RadzenCard>
     </div>
 </div>
 <RadzenCard>
-    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Class="mt-2 mb-4" Text="Nueva OT" Click="@InsertRow" Disabled=@(ordenToInsert != null) />
     <RadzenDataGrid @ref="OrdenesGrid"
                     TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
-                    Data="OTRepo.Ordenes.Where(ot => ot.Repartos == 0)"
+                    Data="@ordenTrabajos"
                     AllowPaging="true"
                     PageSize="50"
                     AllowSorting="true"
                     AllowAlternatingRows="true"
-                    AllowFiltering="true"
-                    RowCreate="@OnCreateRow">
+                    AllowFiltering="true">
         <Columns>
             <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
                                   Property="Numero"
                                   Title="N° OT"
                                   Width="100px" />
             <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
-                                  Property="Movil"
+                                  Property="Movil.Codigo"
                                   Title="Movil"
                                   Width="100px">
-                <EditTemplate Context="orden">
-                    <RadzenTextBox @bind-Value="@orden.Movil" MaxLength="6" />
-                </EditTemplate>
+                <Template Context="orden">
+                    <RadzenText Text="@(new string(orden.Movil.Codigo.ToString().Reverse().Take(3).Reverse().ToArray()))"
+                                TextStyle="TextStyle.Body2" />
+                </Template>
             </RadzenDataGridColumn>
 
             <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
@@ -69,12 +75,11 @@
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
-                                  Property="Comuna"
                                   Title="Comuna"
                                   Width="100px">
-                <EditTemplate Context="orden">
-                    <RadzenTextBox @bind-Value="@orden.Comuna" />
-                </EditTemplate>
+                <Template Context="data">
+                    <RadzenLabel Text=@data.Comuna?.Nombre />
+                </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="BlazorApp1.Shared.Modelo.OT.OrdenTrabajo"
                                   Context="orden"
@@ -87,21 +92,9 @@
                                   Icon="delete"
                                   Variant="Variant.Flat"
                                   Size="ButtonSize.Medium"
-                                  Click="(args => DeleteRow(orden))"
-                                  @onclick:stopPropagation="true" />
+                                  Click="(args => CerrarOrden(orden))"
+                    @onclick:stopPropagation="true" />
                 </Template>
-                <EditTemplate Context="orden">
-                    <RadzenButton Icon="check"
-                                  ButtonStyle="ButtonStyle.Success"
-                                  Variant="Variant.Flat"
-                                  Size="ButtonSize.Medium"
-                                  Click="@((args) => SaveRow(orden))" />
-                    <RadzenButton Icon="close"
-                                  ButtonStyle="ButtonStyle.Light"
-                                  Variant="Variant.Flat"
-                                  Size="ButtonSize.Medium"
-                                  Click="@((args) => CancelEdit(orden))" />
-                </EditTemplate>
             </RadzenDataGridColumn>
         </Columns>
 
@@ -111,29 +104,34 @@
 @code {
     RadzenDataGrid<BlazorApp1.Shared.Modelo.OT.OrdenTrabajo> OrdenesGrid;
     BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenToInsert;
-    DateTime FechaDesde = DateTime.Today;
-    DateTime FechaHasta = DateTime.Today;
+    List<BlazorApp1.Shared.Modelo.OT.OrdenTrabajo> ordenTrabajos = new List<BlazorApp1.Shared.Modelo.OT.OrdenTrabajo>();
+    FiltroBusquedaOrdenTrabajo filtro = new FiltroBusquedaOrdenTrabajo();
+    private int OtCerradas = 0;
+    protected override async Task OnInitializedAsync()
+    {
 
-    //protected override async Task OnInitializedAsync()
-    //{
-    //    await OTRepo.UpdateOrdenes(0, "DEFINITIVA",FechaDesde,FechaHasta);
-    //}
+        ordenTrabajos = await ordenesService.GetLocalAsync(filtro);
+    }
 
     private async Task AutoClose()
     {
         try
         {
-            int OtCerradas = 0;
+            // int OtCerradas = 0;
 
             loading.Show("Cerrando OT's");
-            var otes = OTRepo.Ordenes.Where(ot => ot.Repartos == 0);
+            var otes = await ordenesService.GetLocalAsync(filtro);
+            List<Task> tasks = new List<Task>();
             foreach (var ote in otes)
             {
-                if (await OTRepo.CloseOrden(ote))
-                    OtCerradas++;
+                tasks.Add(CerrarOrden(ote));
+                // if (await OTRepo.CloseOrden(ote))
+                //     OtCerradas++;
             }
+            await Task.WhenAll(tasks);
 
             await dialog.OpenAlertDialogAsync($"{OtCerradas} Ot's Cerradas", "Completo");
+
 
         }
         catch (ExceptionResponse exres)
@@ -147,8 +145,13 @@
         loading.Close();
         await Update();
         await OrdenesGrid.Reload();
+        OtCerradas = 0;
+    }
 
-
+    private async Task CerrarOrden(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
+    {
+        if (await ordenesService.CerrarAsync(ordenTrabajo))
+            OtCerradas++;
     }
 
     private async Task Update()
@@ -156,7 +159,8 @@
         try
         {
             loading.Show("Buscando OT's");
-            await OTRepo.UpdateOrdenes(0, "DEFINITIVA", FechaDesde, FechaHasta);
+            // await OTRepo.UpdateOrdenes(0, "DEFINITIVA", FechaDesde, FechaHasta);
+            ordenTrabajos = await ordenesService.GetLocalAsync(filtro);
         }
         catch (ExceptionResponse exres)
         {
@@ -169,88 +173,21 @@
         loading.Close();
     }
 
-    private async Task InsertRow()
-    {
-        ordenToInsert = new BlazorApp1.Shared.Modelo.OT.OrdenTrabajo();
-        await OrdenesGrid.InsertRow(ordenToInsert);
-    }
 
-
-    private void OnCreateRow(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
-    {
-        if (ordenTrabajo.Movil != null)
-        {
-            try
-            {
-                loading.Show("Creando OT...");
-                OTRepo.CreateOrden(int.Parse(ordenTrabajo.Movil));
-            }
-            catch (ExceptionResponse exres)
-            {
-                note.NotifyResponse(exres);
-            }
-            catch (NullReferenceException nullex)
-            {
-                note.NotifyNull(nullex);
-            }
-            loading.Close();
-        }
-    }
-
-    private void CancelEdit(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
-    {
-        if (ordenTrabajo == ordenToInsert)
-        {
-            ordenToInsert = null;
-        }
-
-        OrdenesGrid.CancelEditRow(ordenTrabajo);
-    }
-    private async Task DeleteRow(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
-    {
-        if (ordenTrabajo == ordenToInsert)
-        {
-            ordenToInsert = null;
-        }
-        try
-        {
-            loading.Show($"Cerrando {ordenTrabajo.Numero}");
-            if (await OTRepo.CloseOrden(ordenTrabajo))
-            {
-                //OrdenesGrid.CancelEditRow(ordenTrabajo);
-                note.NotifyOtCerrada(ordenTrabajo);
-
-                await OrdenesGrid.Reload();
-            }
-            else
-                //Agregar Notificacion si no cierra
-                note.NotifyOtNoCerrada(ordenTrabajo);
-        }
-        catch (ExceptionResponse exres)
-        {
-            note.NotifyResponse(exres);
-        }
-        catch (NullReferenceException nullex)
-        {
-            note.NotifyNull(nullex);
-        }
-
-        loading.Close();
-        await OrdenesGrid.Reload();
-
-
-    }
-    private async Task SaveRow(BlazorApp1.Shared.Modelo.OT.OrdenTrabajo ordenTrabajo)
-    {
-        await OrdenesGrid.UpdateRow(ordenTrabajo);
-        ordenToInsert = null;
-    }
 
     private async Task Exportar()
     {
-        Services.Export export = new Services.Export();
-        var response = await export.ToExcel("Titulo",OTRepo.Ordenes.Where(ot => ot.Repartos == 0).ToList());
-        string fileName = "Ordenes.xlsx";
-        await Js.InvokeAsync<object>("saveAsFile", fileName, Convert.ToBase64String(response));
+        try
+        {
+            Services.Export export = new Services.Export();
+            var response = await export.ToExcel("Titulo", ordenTrabajos);
+            string fileName = "Ordenes.xlsx";
+            await Js.InvokeAsync<object>("saveAsFile", fileName, Convert.ToBase64String(response));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
     }
 }
